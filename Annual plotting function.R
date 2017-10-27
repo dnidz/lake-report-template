@@ -48,9 +48,9 @@ annual.plot<-function(data,lake,year,param,wy=F){
     labs(y=y$label)
   
   # Parameter-specific add-ons:
-  if(Param=="NP") {
+  if(param=="NP") {
     p<-p+geom_hline(aes(yintercept=25),color="grey",size=0.5)
-  } else if(Param=="Secchi") {
+  } else if(param=="Secchi") {
     p<-p+scale_y_reverse(breaks=seq(y$min,y$max,y$breaksize))+
       coord_cartesian(ylim=c(y$max,y$min),xlim=c(1996,2016))
   }

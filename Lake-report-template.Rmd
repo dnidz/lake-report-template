@@ -3,9 +3,10 @@ title: "Lake Report Template"
 author: "Daniel Nidzgorski"
 date: "October 27, 2017"
 output:
-  html_document:
-    keep_md: true
-  pdf_document: default
+  html_notebook: default
+  github_document: default
+params:
+  year: 2017
 ---
 
 ```{r setup, include=FALSE}
@@ -54,7 +55,6 @@ data<-input %>%
 ```
 ```{r Testing the plotting function}
 lake<-"Angle"
-year<-2017
 param<-"TotalPhosphorus"
 wy<-F
 
