@@ -20,31 +20,32 @@ annual.plot<-function(data,lake,year,param,wy=F){
     "UV.Absorbance", "UV254 absorbance", 0, 1, 0.2
   ) %>%
     filter(Parameter==param)
-  
-  d<-data %>%
-    filter(Lake==lake,
-           Parameter==param,
-           Year==year)
-  
-  if(wy) {
+
+  if(!wy) {
     start<-as.Date(sprintf("%s-05-01", year))
     end<-as.Date(sprintf("%s-10-31", year))
   } else {
     start<-as.Date(sprintf("%s-10-01", year-1))
-    end<-as.Date(sprintf("%s-09-31", year))
+    end<-as.Date(sprintf("%s-09-30", year))
   }
+  
+  d.all<-data %>%
+    filter(Parameter==param,
+           Depth==1)
+  d<-d.all %>%
+    filter(Lake==lake)
   
   p<-ggplot(d,aes(x=Date,y=Value))+
     geom_line()+geom_point(size=3)+
-    scale_y_continuous(breaks=seq(y$min,y$max,y$breaksize))+
     scale_x_date(date_breaks="1 month",date_labels="%m/1/%y",limits=c(start,end))+
+    scale_y_continuous(breaks=seq(y$min,y$max,y$breaksize))+
     coord_cartesian(ylim=c(y$min,y$max))+
     theme(axis.text.x=element_text(size=11),
           axis.text.y=element_text(size=11),
           axis.title.x=element_blank(),
           axis.title.y=element_text(size=13)
     )+ 
-    labs(title=y$title,y=y$label)
+    labs(y=y$label)
   
   # Parameter-specific add-ons:
   if(Param=="NP") {

@@ -4,7 +4,7 @@ author: "Daniel Nidzgorski"
 date: "October 27, 2017"
 output:
   html_document:
-  keep_md: true
+    keep_md: true
   pdf_document: default
 ---
 
@@ -49,6 +49,16 @@ input<-read_csv(datafile,
 data<-input %>%
   gather(-Lake,-Date,-Depth,
          key=Parameter,value=Value) %>%
-  filter(!str_detect(Parameter,"Q")) # remove quals
+  filter(!str_detect(Parameter,"Q")) %>%
+  mutate(Value=as.numeric(Value))# remove quals
+```
+```{r Testing the plotting function}
+lake<-"Angle"
+year<-2017
+param<-"TotalPhosphorus"
+wy<-F
+
+ap<-annual.plot(data,lake="Allen",year=2017,param="TotalPhosphorus")
+ap
 ```
 
