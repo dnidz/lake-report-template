@@ -16,7 +16,7 @@ annual.plot<-function(data,lake,year,param,wy=F){
     'TotalAlk', "mg CaCO3/L", 0, 25, 5,
     "NPRatio", "N:P ratio", 0, 100, 25,
     "ChlorophyllA", "Chlorophyll-a (µg/L)", 0, 40, 10,
-    "Secchi", "Secchi depth (m)", 0, 6, 2,
+    "Secchi", "Secchi depth (m)", 0, 10, 2,
     "UV.Absorbance", "UV254 absorbance", 0, 1, 0.2
   ) %>%
     filter(Parameter==param)
@@ -52,7 +52,7 @@ annual.plot<-function(data,lake,year,param,wy=F){
     p<-p+geom_hline(aes(yintercept=25),color="grey",size=0.5)
   } else if(param=="Secchi") {
     p<-p+scale_y_reverse(breaks=seq(y$min,y$max,y$breaksize))+
-      coord_cartesian(ylim=c(y$max,y$min),xlim=c(1996,2016))
+      coord_cartesian(ylim=c(y$max,y$min))
   }
   
 p

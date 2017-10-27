@@ -3,9 +3,11 @@ title: "Lake Report Template"
 author: "Daniel Nidzgorski"
 date: "October 27, 2017"
 output:
+  word_document: default
   html_notebook: default
   github_document: default
 params:
+  lake: Angle
   year: 2017
 ---
 
@@ -13,7 +15,7 @@ params:
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(stringr)
-
+source("Multiplot function.R")
 source("Annual plotting function.R")
 ```
 ```{r Set up data, include=FALSE}
@@ -53,12 +55,28 @@ data<-input %>%
   filter(!str_detect(Parameter,"Q")) %>%
   mutate(Value=as.numeric(Value))# remove quals
 ```
-```{r Testing the plotting function}
-lake<-"Angle"
-param<-"TotalPhosphorus"
+
+```{r Testing the plotting function, eval=FALSE}
+lake<-params$lake
+year<-params$year
+param<-"Secchi"
 wy<-F
 
-ap<-annual.plot(data,lake="Allen",year=2017,param="TotalPhosphorus")
+ap<-annual.plot(data,lake="Angle",year=2017,param="NPRatio")
 ap
+```
+
+```{r Generate annual plots, message=F,warning=F}
+annual.params<-c("Secchi",
+                 "Temperature",
+                 "TotalNitrogen",
+                 "TotalPhosphorus",
+                 "NPRatio",
+                 "ChlorophyllA"
+)
+
+annual.plots.list<-map(annual.params,annual.plot,
+                      data=data,lake=params$lake,year=params$year,wy=F)
+multiplot(plotlist=annual.plots.list,cols=1)
 ```
 
