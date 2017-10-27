@@ -1,0 +1,54 @@
+---
+title: "Lake Report Template"
+author: "Daniel Nidzgorski"
+date: "October 27, 2017"
+output:
+  html_document:
+  keep_md: true
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)
+library(stringr)
+
+source("Annual plotting function.R")
+```
+```{r Set up data, include=FALSE}
+# This looks for a "Small Lake Data" csv file in the directory
+# from the web/SQL database
+
+datafile<-list.files() %>%
+  {Filter(x=.,function(d) str_detect(d,"Small Lake Data"))}
+input<-read_csv(datafile,
+         col_types=cols(
+           .default = col_double(),
+           SiteName = col_character(),
+           CollectDate = col_datetime(format = ""),
+           DepthQ = col_character(),
+           SecchiQ = col_character(),
+           TempQ = col_character(),
+           ChloroQ = col_character(),
+           PheophQ = col_character(),
+           TotalNQ = col_character(),
+           NO23Q = col_character(),
+           NH3NQ = col_character(),
+           TotalPQ = col_character(),
+           OPO4Q = col_character(),
+           UV254Q = col_character(),
+           TotalAlkQ = col_character(),
+           AnatoxinQ = col_character(),
+           MicrocystinQ = col_character()
+         )
+) %>%
+  rename(Lake=SiteName,
+         Date=CollectDate) %>%
+  mutate(Date=as.Date(Date))
+
+data<-input %>%
+  gather(-Lake,-Date,-Depth,
+         key=Parameter,value=Value) %>%
+  filter(!str_detect(Parameter,"Q")) # remove quals
+```
+
