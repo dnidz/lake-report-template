@@ -11,15 +11,25 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
  
   y<-tribble(
     ~Parameter, ~label, ~min, ~max, ~breaksize,
-    "TotalPhosphorus", "Total Phosphorus (µg/L)", 0, 100, 20,
-    "TotalNitrogen", "Total Nitrogen (µg/L)", 0, 1000, 200,
-    "Temperature", "Water temperature (°C)", 0, 30, 5,
-    'TotalAlk', "mg CaCO3/L", 0, 25, 5,
+    "TotalPhosphorus", "Total Phosphorus (ug/L)", 0, 100, 20,
+    "TotalNitrogen", "Total Nitrogen (ug/L)", 0, 1000, 200,
+    "Temperature", "Water temperature (C)", 0, 30, 5,
+    'TotalAlk', "Total Alkalinity (mg CaCO3/L)", 0, 25, 5,
     "NPRatio", "N:P ratio", 0, 100, 25,
-    "ChlorophyllA", "Chlorophyll-a (µg/L)", 0, 40, 10,
+    "ChlorophyllA", "Chlorophyll-a (ug/L)", 0, 40, 10,
     "Secchi", "Secchi depth (m)", 0, 10, 2,
     "UV.Absorbance", "UV254 absorbance", 0, 1, 0.2
-  ) 
+  ) %>%
+    mutate(label=ordered(label,
+                             levels=c("Secchi depth (m)",
+                                      "Water temperature (C)",
+                                      "Chlorophyll-a (ug/L)",
+                                      "Total Nitrogen (ug/L)",
+                                      "Total Phosphorus (ug/L)",
+                                      "N:P ratio",
+                                      "UV254 absorbance",
+                                      "Total Alkalinity (mg CaCO3/L)")))
+    
   
   params.list<-c("Temperature",
                  "Secchi",
@@ -30,28 +40,40 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
   )
 
 
-  # Set data frames and nucleate desired plot
-  if(!means) {
-    
-    if(!wy) {
-      start<-as.Date(sprintf("%s-05-01", year))
-      end<-as.Date(sprintf("%s-10-31", year))
-    } else {
-      start<-as.Date(sprintf("%s-10-01", year-1))
-      end<-as.Date(sprintf("%s-09-30", year))
-    }
-    
-    d.background<-data %>%
-      filter(Depth==1,
-             Parameter %in% params.list,
-             Date>=start,
-             Date<=end) %>%
-      left_join(y,by="Parameter")
-    
-    d<-d.background %>%
-      filter(Lake==lake)
+  # Start with individual data. If plotting annual means, this is still needed to set the same
+  # chlorophyll max for both the individual and annual-means plots.
 
-    } else {
+  if(!wy) {
+    start<-as.Date(sprintf("%s-05-01", year))
+    end<-as.Date(sprintf("%s-10-31", year))
+  } else {
+    start<-as.Date(sprintf("%s-10-01", year-1))
+    end<-as.Date(sprintf("%s-09-30", year))
+  }
+  
+  d.background<-data %>%
+    filter(Depth==1,
+           Parameter %in% params.list,
+           Date>=start,
+           Date<=end) %>%
+    left_join(y,by="Parameter") 
+  
+  d<-d.background %>%
+    filter(Lake==lake)
+  
+  # Filter chlorophyll data to exclude high ones
+  # with "high" defined by this lake's data if > set limit
+  data.chlor.max<-d %>%
+    filter(Parameter=="ChlorophyllA") %>%
+    .$Value %>%
+    max(na.rm=T)
+  chlor.max<-y %>%
+    filter(Parameter=="ChlorophyllA") %>%
+    .$max %>%
+    {ifelse(data.chlor.max> . ,data.chlor.max, . )}
+
+  # Now that chlorophyll max is set, can override the data frames with annual-means
+  if (means) {
       # Annual means
       d.background<-data %>%
         filter(Depth==1,
@@ -72,19 +94,8 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
       start<-min(d$Year,na.rm=T)
       end<-max(d$Year,na.rm=T)
     }
-  
-  
-  # Filter chlorophyll data to exclude high ones
-  # with "high" defined by this lake's data if > set limit
-  data.chlor.max<-d %>%
-    filter(Parameter=="ChlorophyllA") %>%
-    .$Value %>%
-    max(na.rm=T)
-  chlor.max<-y %>%
-    filter(Parameter=="ChlorophyllA") %>%
-    .$max %>%
-    {ifelse(data.chlor.max> . ,data.chlor.max, . )}
-  
+
+  # Filter chlorophyll
   d.background<-d.background %>%
     filter(Parameter!="ChlorophyllA" | Value<chlor.max,
            !is.na(Value))
@@ -107,7 +118,7 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
   
   # Rest of plot
   p<-p+
-    facet_wrap(~Parameter,ncol=1,scales="free_y")+
+    facet_wrap(~label,ncol=1,scales="free_y")+
     # Background data
     geom_jitter(color="black",size=2,alpha=0.25,width=jitterwidth)+
     # Lake-specific data
