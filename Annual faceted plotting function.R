@@ -89,31 +89,7 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
     filter(Parameter!="ChlorophyllA" | Value<chlor.max,
            !is.na(Value))
   
-  # High, low, and median lakes
-  grandmeans<-d.background %>%
-    group_by(Lake,Parameter) %>%
-    summarize(Mean=mean(Value,na.rm=T)) %>%
-    arrange(Parameter,Mean)
-  
-  lakes<-grandmeans %>%
-    group_by(Parameter) %>%
-    summarize(n=n(),
-              min=first(Lake),
-              median=nth(Lake,n=round(n/2)),
-              max=last(Lake)
-    )
-  
-  selection<-lakes %>%
-    select(-n) %>%
-    gather(-Parameter,key=Type,value=Lake)
-  
-  highlow<-map2_df(selection$Parameter,selection$Lake,
-                   function(x,y) filter(d.background,
-                                        Parameter==x,
-                                        Lake==y)
-  ) %>%
-    left_join(selection,by=c("Parameter","Lake"))
-  
+
   # Nucleate plot
   if(!means) {
     
@@ -134,16 +110,6 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
     facet_wrap(~Parameter,ncol=1,scales="free_y")+
     # Background data
     geom_jitter(color="black",size=2,alpha=0.25,width=jitterwidth)+
-    # High, low, median lines
-    geom_line(data=highlow,aes(group=Type),linetype="dashed",na.rm=T)+
-    geom_text_repel(
-      data = subset(highlow,Date==median(Date,na.rm=T)),
-      aes(label=Lake),
-      size = 2,
-      nudge_x = 5,
-      segment.color = NA
-    ) +
-    # scale_color_manual(values=c("min"="black","median"="black","max"="black"))+
     # Lake-specific data
     geom_line(data=d,color="blue",size=1)+geom_point(data=d,size=3,color="blue")+
     # scale_y_continuous(breaks=seq(y$min,y$max,y$breaksize))+
