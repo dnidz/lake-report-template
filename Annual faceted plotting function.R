@@ -1,13 +1,17 @@
 # Annual lake plotting function
+# and wrapper functions
 # Daniel Nidzgorski
-# October 27, 2017
+# November 3, 2017
 
-# For everything except precip/level
 # Returns a ggplot object
 
 # Set wy=T to plot for a full water year
 # Set means=T to return a plot of annual means
-annual.plot.facet<-function(data,lake,year,wy=F,means=F){
+# Can take any parameter list. Also has some pre-defined ones:
+# L2 = Secchi, Temp, Chlor, TP, TN, NP
+# ST = Secchi & Temp
+# no ST = Chlor, TP, TN, NP (L2 except Secchi & Temp)
+lake.plot.facet<-function(data,lake,year,wy=F,means=F,params.list="L2"){
  
   y<-tribble(
     ~Parameter, ~label, ~min, ~max, ~breaksize,
@@ -30,7 +34,7 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
                                       "UV254 absorbance",
                                       "Total Alkalinity (mg CaCO3/L)")))
     
-  
+if(params.list=="L2") {
   params.list<-c("Temperature",
                  "Secchi",
                  "ChlorophyllA",
@@ -38,6 +42,17 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
                  "TotalNitrogen",
                  "NPRatio"
   )
+} else if(params.list=="ST") {
+  params.list<-c("Temperature",
+                 "Secchi") 
+  
+} else if(params.list=="noST") {
+  params.list<-c("ChlorophyllA",
+                 "TotalPhosphorus",
+                 "TotalNitrogen",
+                 "NPRatio"
+  )
+}
 
 
   # Start with individual data. If plotting annual means, this is still needed to set the same
@@ -74,7 +89,7 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
 
   # Now that chlorophyll max is set, can override the data frames with annual-means
   if (means) {
-      # Annual means
+      # Annual means.
       d.background<-data %>%
         filter(Depth==1,
                Parameter %in% params.list) %>%
@@ -111,7 +126,7 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
     
   } else {
     p<-ggplot(d.background,aes(x=Year,y=Value))+
-      scale_x_continuous(limits=c(start,end))
+      scale_x_continuous(limits=c(start,end),breaks=seq(start,end,2))
     
     jitterwidth<-0.2
   }
@@ -131,8 +146,95 @@ annual.plot.facet<-function(data,lake,year,wy=F,means=F){
           axis.title.x=element_blank(),
           axis.title.y=element_blank()
     )+
-    guides(color=F)+
-    geom_hline(data=filter(d,Parameter=="NPRatio"),aes(yintercept=25),color="grey",size=0.5)
+    guides(color=F)
+  
+  if("NPRatio" %in% params.list) {
+    p<-p+geom_hline(data=filter(d,Parameter=="NPRatio"),aes(yintercept=25),color="grey",size=0.5)
+  }
   
   p
+}
+
+
+# Plot a lake that has only L2 data
+lake.plot.L2<-function(data,lake,year) {
+  
+  p<-lake.plot.facet(data,lake,year,wy=F,means=F,params.list="L2")
+  p.rev<-p+scale_y_reverse()
+  
+  m<-lake.plot.facet(data,lake,year,wy=F,means=T,params.list="L2")
+  m.rev<-m+scale_y_reverse()
+  
+  # For tweaking, set width and height once
+  w<-6
+  h<-10
+  
+  ggsave(p,filename="tmp-indiv.png",width=w,height=h)
+  ggsave(p.rev,filename="tmp-indiv-rev.png",width=w,height=h)
+  ggsave(m,filename="tmp-means.png",width=w,height=h)
+  ggsave(m.rev,filename="tmp-means-rev.png",width=w,height=h)
+  
+  # Cropping - 300 dpi
+  wpix<-300*w
+  hpix<-300*h
+  
+  # Set height for Secchi l
+  hsec<-hpix*1.05/6.2
+  
+  GpimageCrop("tmp-indiv-rev.png","tmp-secchi.png",1,hpix-hsec,wpix,hpix)
+  GpimageCrop("tmp-indiv.png","tmp-indiv2.png",1,1,wpix,hpix-hsec)
+  GpimageCrop("tmp-means-rev.png","tmp-secchi-means.png",1,hpix-hsec,wpix,hpix)
+  GpimageCrop("tmp-means.png","tmp-means2.png",1,1,wpix,hpix-hsec)
+  
+  tile.files<-matrix(c("tmp-means2.png","tmp-indiv2.png","tmp-secchi-means.png","tmp-secchi.png"),ncol=2)
+  tile.widths<-rep.int(wpix,2)
+  tile.heights<-c(hpix-hsec,hsec)
+  
+  GpimageTile(sprintf("%s-%s.png",lake,year),
+              tile.files,tile.widths,tile.heights)
+
+}
+
+
+# Plot a lake with standard L1 and L2 data
+lake.plot.L1<-function(data,lake,year) {
+  
+  L2<-lake.plot.facet(data,lake,year,wy=F,means=F,params.list="noST")
+  secchi<-lake.plot.facet(data,lake,year,wy=T,means=F,params.list="Secchi")+
+    scale_y_reverse()
+  temp<-lake.plot.facet(data,lake,year,wy=T,means=F,params.list="Temperature")
+  
+  m.L2<-lake.plot.facet(data,lake,year,wy=F,means=T,params.list="noST")
+  m.secchi<-lake.plot.facet(data,lake,year,wy=T,means=T,params.list="Secchi")+
+    scale_y_reverse()
+  m.temp<-lake.plot.facet(data,lake,year,wy=T,means=T,params.list="Temperature")
+  
+  # For tweaking, set width and height once
+  w<-6
+  h<-10
+  
+  ggsave(p,filename="tmp-indiv.png",width=w,height=h)
+  ggsave(p.rev,filename="tmp-indiv-rev.png",width=w,height=h)
+  ggsave(m,filename="tmp-means.png",width=w,height=h)
+  ggsave(m.rev,filename="tmp-means-rev.png",width=w,height=h)
+  
+  # Cropping - 300 dpi
+  wpix<-300*w
+  hpix<-300*h
+  
+  # Set height for Secchi l
+  hsec<-hpix*1.05/6.2
+  
+  GpimageCrop("tmp-indiv-rev.png","tmp-secchi.png",1,hpix-hsec,wpix,hpix)
+  GpimageCrop("tmp-indiv.png","tmp-indiv2.png",1,1,wpix,hpix-hsec)
+  GpimageCrop("tmp-means-rev.png","tmp-secchi-means.png",1,hpix-hsec,wpix,hpix)
+  GpimageCrop("tmp-means.png","tmp-means2.png",1,1,wpix,hpix-hsec)
+  
+  tile.files<-matrix(c("tmp-means2.png","tmp-indiv2.png","tmp-secchi-means.png","tmp-secchi.png"),ncol=2)
+  tile.widths<-rep.int(wpix,2)
+  tile.heights<-c(hpix-hsec,hsec)
+  
+  GpimageTile(sprintf("%s-%s.png",lake,year),
+              tile.files,tile.widths,tile.heights)
+  
 }
