@@ -16,7 +16,7 @@ lake.plot.facet<-function(data,lake,year,wy=F,means=F,params.list="L2"){
   y<-tribble(
     ~Parameter, ~label, ~min, ~max, ~breaksize,
     "TotalPhosphorus", "Total Phosphorus (ug/L)", 0, 100, 20,
-    "TotalNitrogen", "Total Nitrogen (ug/L)", 0, 1000, 200,
+    "TotalNitrogen", "Total Nitrogen (ug/L)", 0, 1100, 200,
     "Temperature", "Water temperature (C)", 0, 30, 5,
     'TotalAlk', "Total Alkalinity (mg CaCO3/L)", 0, 25, 5,
     "NPRatio", "N:P ratio", 0, 100, 25,
@@ -89,28 +89,44 @@ if(params.list=="L2") {
 
   # Now that chlorophyll max is set, can override the data frames with annual-means
   if (means) {
-      # Annual means.
-      d.background<-data %>%
-        filter(Depth==1,
-               Parameter %in% params.list) %>%
-        mutate(Year=year(Date),
-               Month=month(Date)) %>%
-        filter(Year>=1994,
-               Month>=5,
-               Month<=10) %>%
-        group_by(Parameter,Year,Lake) %>%
-        summarize(Value=mean(Value,na.rm=T)) %>%
-        left_join(y,by="Parameter") %>%
-        mutate(Date=Year)
-      
-      d<-d.background %>%
-        filter(Lake==lake)
-      
-      start<-min(d$Year,na.rm=T)
-      end<-max(d$Year,na.rm=T)
-    }
+    # Annual means.
+    d.means<-data %>%
+      filter(Depth==1,
+             Parameter %in% params.list) %>%
+      mutate(Year=year(Date),
+             Month=month(Date)) %>%
+      filter(Year>=1994,
+             Month>=5,
+             Month<=10) %>%
+      group_by(Parameter,Year,Lake) %>%
+      summarize(Value=mean(Value,na.rm=T)) %>%
+      left_join(y,by="Parameter") %>%
+      mutate(Date=Year)
+    
+    # Only include lake/year combos with at least five sampling dates
+    # (don't filter per parameter since this will preclude ever doing mean alkalinity or color)
+    trimlist<-data %>%
+      select(Lake,Date) %>%
+      mutate(Year=year(Date)) %>%
+      group_by(Lake,Year) %>%
+      summarize(Count=n()) %>%
+      filter(Count>=5) %>%
+      mutate(Keep=T) %>%
+      select(-Count)
+    
+    d.background<-d.means %>%
+      left_join(trimlist,by=c("Lake","Year")) %>%
+      filter(Keep) %>%
+      select(-Keep)
+    
+    d<-d.background %>%
+      filter(Lake==lake)
+    
+    start<-min(d$Year,na.rm=T)
+    end<-max(d$Year,na.rm=T)
+  }
 
-  # Filter chlorophyll
+  # Filter chlorophyll background data
   d.background<-d.background %>%
     filter(Parameter!="ChlorophyllA" | Value<chlor.max,
            !is.na(Value))
