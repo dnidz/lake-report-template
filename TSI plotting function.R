@@ -94,11 +94,22 @@ TSI.plot<-function(data,lake,year) {
     
 }
 
-TSI.map<-function(data,lake,year) {
+data<-L2.data
+year<-2016
+
+TSI.map<-function(data,year) {
+  
+  latlong<-read_csv("lakelatlong.csv",
+                    col_types=cols(
+                      Lake = col_character(),
+                      Latitude = col_double(),
+                      Longitude = col_double()
+                    ))
   
   params.list<-c("TotalPhosphorus",
                  "ChlorophyllA",
                  "Secchi")
+  
   d.means<-data %>%
     filter(Depth==1,
            Parameter %in% params.list) %>%
@@ -115,9 +126,21 @@ TSI.map<-function(data,lake,year) {
     mutate(TSI.Sec=10*(6-(log(Secchi/0.693))),
            TSI.Chl=10*(6-((2.04)-(0.68*log(ChlorophyllA)))/log(2)),
            TSI.TP=10*(6-(log(48/TotalPhosphorus)/0.693)) # TP in ug/L
-    ) 
+    ) %>%
+    left_join(latlong,by="Lake")
   
+  pal <- colorNumeric(
+    palette = "BuGn",
+    domain = c(0,70))
   
+  l<-leaflet(d.TSI) %>% 
+    addProviderTiles(providers$CartoDB.Positron) %>%
+    addCircleMarkers(color= ~pal(TSI.Chl),
+                     stroke = FALSE, fillOpacity = 1,
+                     label= ~Lake,
+                     labelOptions=labelOptions(noHide=T,textOnly=T)
+    )
   
+  l
   
 }
