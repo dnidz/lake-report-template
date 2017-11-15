@@ -16,22 +16,22 @@ lake.plot.facet<-function(data,lake,year,wy=F,means=F,params.list="L2"){
   y<-tribble(
     ~Parameter, ~label, ~min, ~max, ~breaksize,
     "TotalPhosphorus", "Total Phosphorus (ug/L)", 0, 100, 20,
-    "TotalNitrogen", "Total Nitrogen (ug/L)", 0, 1100, 200,
-    "Temperature", "Water temperature (C)", 0, 30, 5,
+    "TotalNitrogen", "Total Nitrogen (ug/L)", 0, 100, 200,
+    "Temperature", "Water Temperature (C)", 0, 30, 5,
     'TotalAlk', "Total Alkalinity (mg CaCO3/L)", 0, 25, 5,
     "NPRatio", "N:P ratio", 0, 100, 25,
     "ChlorophyllA", "Chlorophyll-a (ug/L)", 0, 40, 10,
-    "Secchi", "Secchi depth (m)", 0, 10, 2,
+    "Secchi", "Secchi Depth (m)", 0, 10, 2,
     "UV.Absorbance", "UV254 absorbance", 0, 1, 0.2
   ) %>%
     mutate(label=ordered(label,
-                             levels=c("Secchi depth (m)",
-                                      "Water temperature (C)",
+                             levels=c("Secchi Depth (m)",
+                                      "Water Temperature (C)",
                                       "Chlorophyll-a (ug/L)",
                                       "Total Nitrogen (ug/L)",
                                       "Total Phosphorus (ug/L)",
                                       "N:P ratio",
-                                      "UV254 absorbance",
+                                      "UV254 Absorbance",
                                       "Total Alkalinity (mg CaCO3/L)")))
     
 if(params.list=="L2") {
@@ -89,6 +89,19 @@ if(params.list=="L2") {
 
   # Now that chlorophyll max is set, can override the data frames with annual-means
   if (means) {
+    
+    y<-y %>%
+      mutate(label=sprintf("Average %s",label),
+             label=ordered(label,
+                           levels=c("Average Secchi Depth (m)",
+                                    "Average Water Temperature (C)",
+                                    "Average Chlorophyll-a (ug/L)",
+                                    "Average Total Nitrogen (ug/L)",
+                                    "Average Total Phosphorus (ug/L)",
+                                    "Average N:P ratio",
+                                    "Average UV254 Absorbance",
+                                    "Average Total Alkalinity (mg CaCO3/L)")))
+    
     # Annual means.
     d.means<-data %>%
       filter(Depth==1,
@@ -96,17 +109,17 @@ if(params.list=="L2") {
       mutate(Year=year(Date),
              Month=month(Date)) %>%
       filter(Year>=1994,
+             Year<=year,
              Month>=5,
              Month<=10) %>%
       group_by(Parameter,Year,Lake) %>%
-      summarize(Value=mean(Value,na.rm=T)) %>%
-      left_join(y,by="Parameter") %>%
-      mutate(Date=Year)
+      summarize(Value=mean(Value,na.rm=T))
     
     # Only include lake/year combos with at least five sampling dates
     # (don't filter per parameter since this will preclude ever doing mean alkalinity or color)
     trimlist<-data %>%
       select(Lake,Date) %>%
+      unique() %>% # since each date will have multiple rows for params
       mutate(Year=year(Date)) %>%
       group_by(Lake,Year) %>%
       summarize(Count=n()) %>%
@@ -117,11 +130,22 @@ if(params.list=="L2") {
     d.background<-d.means %>%
       left_join(trimlist,by=c("Lake","Year")) %>%
       filter(Keep) %>%
-      select(-Keep)
+      select(-Keep) %>%
+      left_join(y,by="Parameter")
     
-    d<-d.background %>%
-      filter(Lake==lake)
+    # Years without data are likely simply skipped -- insert NAs to break the line
+    year.list<-expand.grid(Year=full_seq(d.means$Year,1),
+                           Parameter=params.list) %>%
+      mutate(Parameter=as.character(Parameter))
     
+    d<-d.means %>%
+      left_join(trimlist,by=c("Lake","Year")) %>%
+      filter(Keep,Lake==lake) %>%
+      select(-Keep) %>%
+      full_join(year.list,by=c("Parameter","Year")) %>%
+      left_join(y,by="Parameter") 
+      
+
     start<-min(d$Year,na.rm=T)
     end<-max(d$Year,na.rm=T)
   }
@@ -188,10 +212,10 @@ lake.plot.L2<-function(data,lake,year) {
   w<-6
   h<-10
   
-  ggsave(p,filename="tmp-indiv.png",width=w,height=h)
-  ggsave(p.rev,filename="tmp-indiv-rev.png",width=w,height=h)
-  ggsave(m,filename="tmp-means.png",width=w,height=h)
-  ggsave(m.rev,filename="tmp-means-rev.png",width=w,height=h)
+  ggsave(p,filename="Tmp/tmp-indiv.png",width=w,height=h)
+  ggsave(p.rev,filename="Tmp/tmp-indiv-rev.png",width=w,height=h)
+  ggsave(m,filename="Tmp/tmp-means.png",width=w,height=h)
+  ggsave(m.rev,filename="Tmp/tmp-means-rev.png",width=w,height=h)
   
   # Cropping - 300 dpi
   wpix<-300*w
@@ -200,13 +224,13 @@ lake.plot.L2<-function(data,lake,year) {
   # Set height for Secchi l
   hsec<-hpix*1.05/6.2
   
-  GpimageCrop("tmp-indiv-rev.png","tmp-secchi.png",1,hpix-hsec,wpix,hpix)
-  GpimageCrop("tmp-indiv.png","tmp-indiv2.png",1,1,wpix,hpix-hsec)
-  GpimageCrop("tmp-means-rev.png","tmp-secchi-means.png",1,hpix-hsec,wpix,hpix)
-  GpimageCrop("tmp-means.png","tmp-means2.png",1,1,wpix,hpix-hsec)
+  GpimageCrop("Tmp/tmp-indiv-rev.png","Tmp/tmp-secchi.png",1,hpix-hsec,wpix,hpix)
+  GpimageCrop("Tmp/tmp-indiv.png","Tmp/tmp-indiv2.png",1,1,wpix,hpix-hsec)
+  GpimageCrop("Tmp/tmp-means-rev.png","Tmp/tmp-secchi-means.png",1,hpix-hsec,wpix,hpix)
+  GpimageCrop("Tmp/tmp-means.png","Tmp/tmp-means2.png",1,1,wpix,hpix-hsec)
   
-  GpimageTile(sprintf("%s-%s.png",lake,year),
-              matrix(c("tmp-means2.png","tmp-indiv2.png","tmp-secchi-means.png","tmp-secchi.png"),ncol=2),
+  GpimageTile(sprintf("Plots/%s-%s-WQ.png",year,lake),
+              matrix(c("Tmp/tmp-means2.png","Tmp/tmp-indiv2.png","Tmp/tmp-secchi-means.png","Tmp/tmp-secchi.png"),ncol=2),
               rep.int(wpix,2),
               c(hpix-hsec,hsec)
   )
@@ -222,7 +246,10 @@ lake.plot.L1<-function(data.L1,data.L2,lake,year) {
   secchi<-temp+scale_y_reverse()
 
   m.L2<-lake.plot.facet(data.L2,lake,year,wy=F,means=T,params.list="noST")
-  m.temp<-lake.plot.facet(data.L1,lake,year,wy=T,means=T,params.list="ST")
+  # For secchi and temp means, use both L1 and L2 data since many lakes have a
+  # longer L2 record than they do L1
+  m.temp<-bind_rows(data.L1,data.L2) %>%
+    lake.plot.facet(lake,year,wy=T,means=T,params.list="ST")
   m.secchi<-m.temp+scale_y_reverse()
   
   # For tweaking, set width and height once
@@ -231,13 +258,13 @@ lake.plot.L1<-function(data.L1,data.L2,lake,year) {
   h.L2<-h*4.2/6.2
   h.st<-h*2.2/6.2
   
-  ggsave(L2,filename="tmp-indiv-L2.png",width=w,height=h.L2)
-  ggsave(secchi,filename="tmp-indiv-secchi.png",width=w,height=h.st)
-  ggsave(temp,filename="tmp-indiv-temp.png",width=w,height=h.st)
+  ggsave(L2,filename="Tmp/tmp-indiv-L2.png",width=w,height=h.L2)
+  ggsave(secchi,filename="Tmp/tmp-indiv-secchi.png",width=w,height=h.st)
+  ggsave(temp,filename="Tmp/tmp-indiv-temp.png",width=w,height=h.st)
   
-  ggsave(m.L2,filename="tmp-means-L2.png",width=w,height=h.L2)
-  ggsave(m.secchi,filename="tmp-means-secchi.png",width=w,height=h.st)
-  ggsave(m.temp,filename="tmp-means-temp.png",width=w,height=h.st)
+  ggsave(m.L2,filename="Tmp/tmp-means-L2.png",width=w,height=h.L2)
+  ggsave(m.secchi,filename="Tmp/tmp-means-secchi.png",width=w,height=h.st)
+  ggsave(m.temp,filename="Tmp/tmp-means-temp.png",width=w,height=h.st)
   
 
   
@@ -250,26 +277,26 @@ lake.plot.L1<-function(data.L1,data.L2,lake,year) {
   hsec<-hpix.st/2.15
   
   # Crop and combine secchi and temp first
-  GpimageCrop("tmp-indiv-secchi.png","tmp-secchi.png",1,hpix.st-hsec,wpix,hpix.st)
-  GpimageCrop("tmp-means-secchi.png","tmp-secchi-means.png",1,hpix.st-hsec,wpix,hpix.st)
-  GpimageCrop("tmp-indiv-temp.png","tmp-temp.png",1,1,wpix,hpix.st-hsec)
-  GpimageCrop("tmp-means-temp.png","tmp-temp-means.png",1,1,wpix,hpix.st-hsec)
+  GpimageCrop("Tmp/tmp-indiv-secchi.png","Tmp/tmp-secchi.png",1,hpix.st-hsec,wpix,hpix.st)
+  GpimageCrop("Tmp/tmp-means-secchi.png","Tmp/tmp-secchi-means.png",1,hpix.st-hsec,wpix,hpix.st)
+  GpimageCrop("Tmp/tmp-indiv-temp.png","Tmp/tmp-temp.png",1,1,wpix,hpix.st-hsec)
+  GpimageCrop("Tmp/tmp-means-temp.png","Tmp/tmp-temp-means.png",1,1,wpix,hpix.st-hsec)
   
-  GpimageTile("tmp-st.png",
-              matrix(c("tmp-temp.png","tmp-secchi.png"),ncol=2),
+  GpimageTile("Tmp/tmp-st.png",
+              matrix(c("Tmp/tmp-temp.png","Tmp/tmp-secchi.png"),ncol=2),
               wpix,
               c(hpix.st-hsec,hsec)
   )
-  GpimageTile("tmp-st-means.png",
-              matrix(c("tmp-temp-means.png","tmp-secchi-means.png"),ncol=2),
+  GpimageTile("Tmp/tmp-st-means.png",
+              matrix(c("Tmp/tmp-temp-means.png","Tmp/tmp-secchi-means.png"),ncol=2),
               wpix,
               c(hpix.st-hsec,hsec)
   )
            
 
   # Then tile with L2
-  GpimageTile(sprintf("%s-%s.png",lake,year),
-              matrix(c("tmp-means-L2.png","tmp-indiv-L2.png","tmp-st-means.png","tmp-st.png"),ncol=2),
+  GpimageTile(sprintf("Plots/%s-%s-WQ.png",year,lake),
+              matrix(c("Tmp/tmp-means-L2.png","Tmp/tmp-indiv-L2.png","Tmp/tmp-st-means.png","Tmp/tmp-st.png"),ncol=2),
               rep.int(wpix,2),
               c(hpix.L2,hpix.st)
   )
