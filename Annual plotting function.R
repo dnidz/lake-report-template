@@ -10,12 +10,12 @@ annual.plot<-function(data,lake,year,param,wy=F){
  
   y<-tribble(
     ~Parameter, ~label, ~min, ~max, ~breaksize,
-    "TotalPhosphorus", "Total Phosphorus (µg/L)", 0, 100, 20,
-    "TotalNitrogen", "Total Nitrogen (µg/L)", 0, 1000, 200,
+    "TotalPhosphorus", "Total Phosphorus (μg/L)", 0, 100, 20,
+    "TotalNitrogen", "Total Nitrogen (μg/L)", 0, 1000, 200,
     "Temperature", "Water temperature (°C)", 0, 30, 5,
     'TotalAlk', "mg CaCO3/L", 0, 25, 5,
     "NPRatio", "N:P ratio", 0, 100, 25,
-    "ChlorophyllA", "Chlorophyll-a (µg/L)", 0, 40, 10,
+    "ChlorophyllA", "Chlorophyll-a (μg/L)", 0, 40, 10,
     "Secchi", "Secchi depth (m)", 0, 10, 2,
     "UV.Absorbance", "UV254 absorbance", 0, 1, 0.2
   ) %>%
