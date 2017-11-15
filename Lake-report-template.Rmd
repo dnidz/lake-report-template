@@ -1,29 +1,36 @@
 ---
-title: "Lake Report Template"
-author: "Daniel Nidzgorski"
-date: "October 27, 2017"
 output:
-  html_notebook: default
-  github_document: default
+  html_document: default
 params:
-  lake: Angle
-  year: 2017
+  lake: Wilderness
+  year: 2016
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE)
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+library(knitr)
 library(tidyverse)
 library(stringr)
+library(lubridate)
+library(Rgnuplot)
 source("Multiplot function.R")
 source("Annual plotting function.R")
+source("Annual faceted plotting function.R")
+source("Hydrology plotting function.R")
+source("TSI plotting function.R")
 ```
-```{r Set up data, include=FALSE}
+
+```{r Set up L2 data, message=FALSE, warning=TRUE}
 # This looks for a "Small Lake Data" csv file in the directory
 # from the web/SQL database
 
-datafile<-list.files() %>%
+L2.file<-list.files() %>%
   {Filter(x=.,function(d) str_detect(d,"Small Lake Data"))}
-input<-read_csv(datafile,
+L2.input<-read_csv(L2.file,
          col_types=cols(
            .default = col_double(),
            SiteName = col_character(),
@@ -48,34 +55,97 @@ input<-read_csv(datafile,
          Date=CollectDate) %>%
   mutate(Date=as.Date(Date))
 
-data<-input %>%
+L2.data<-L2.input %>%
   gather(-Lake,-Date,-Depth,
          key=Parameter,value=Value) %>%
-  filter(!str_detect(Parameter,"Q")) %>%
-  mutate(Value=as.numeric(Value))# remove quals
+  filter(!str_detect(Parameter,"Q")) %>% # remove quals
+  mutate(Value=as.numeric(Value)) %>%
+  filter(!(Parameter=="TotalPhosphorus" & Date<as.Date("1998-01-01")))
+# remove TP before 1998 -- methods change
+
+
+
 ```
 
-```{r Testing the plotting function, eval=FALSE}
-lake<-params$lake
-year<-params$year
-param<-"Secchi"
-wy<-F
+```{r set up L1 weekly data, message=FALSE}
+weekly.file<-list.files() %>%
+  {Filter(x=.,function(d) str_detect(d,"Small Lake Weekly Data"))}
+weekly.input<-read_csv(weekly.file,
+                       col_types=cols(
+                           SiteName = col_character(),
+                           CollectDate = col_datetime(format = ""),
+                           Secchi = col_double(),
+                           Temperature = col_double()
+                         )
+) %>% 
+  rename(Lake=SiteName,
+         Date=CollectDate) %>%
+  mutate(Date=as.Date(Date))
 
-ap<-annual.plot(data,lake="Angle",year=2017,param="NPRatio")
-ap
+# Needs to be in same Lake, Date, Depth, Parameter, Value format as L2 data for plotting function
+weekly.data<-weekly.input %>%
+  gather(-Lake,-Date,
+         key=Parameter,value=Value) %>%
+  mutate(Depth=1)
+
+weekly.lakes<-weekly.data %>%
+  filter(year(Date)==params$year) %>%
+  .$Lake %>%
+  unique()
+
+
 ```
 
-```{r Generate annual plots, message=F,warning=F}
-annual.params<-c("Secchi",
-                 "Temperature",
-                 "TotalNitrogen",
-                 "TotalPhosphorus",
-                 "NPRatio",
-                 "ChlorophyllA"
-)
+```{r Set up L1 daily data, message=FALSE}
+daily.file<-list.files() %>%
+  {Filter(x=.,function(d) str_detect(d,"Small Lake Daily Data"))}
+daily.data<-read_csv(daily.file,
+                      col_types=cols(
+                        SiteName = col_character(),
+                        CollectDate = col_datetime(format = ""),
+                        Precipitation = col_double(),
+                        Level = col_double(),
+                        PrecipQ = col_character()
+                      )) %>% 
+  rename(Lake=SiteName,
+         Date=CollectDate) %>%
+  mutate(Date=as.Date(Date))
+# doesn't need to be in gathered format
 
-annual.plots.list<-map(annual.params,annual.plot,
-                      data=data,lake=params$lake,year=params$year,wy=F)
-multiplot(plotlist=annual.plots.list,cols=1)
+daily.lakes<-daily.data %>%
+    filter(year(Date)==params$year) %>%
+  .$Lake %>%
+  unique()
+```
+
+
+# Small Lake Report: `r params$lake` `r params$year`
+
+## Hydrology: Lake level and precipitation
+```{r Level & precip plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
+# Detect if hydro data exists, and plot
+if(params$lake %in% daily.lakes) {
+  hydro.plot(data=daily.data,lake=params$lake,year=params$year)
+} else {
+  paste("No hydrology data for this lake")
+}
+```
+
+## Water quality plots and annual means
+```{r Water quality plots, message=FALSE, warning=FALSE}
+# Detect if L1 lake, and plot accordingly
+
+if(params$lake %in% weekly.lakes) { 
+  lake.plot.L1(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year)
+} else {
+  lake.plot.L2(data=L2.data,lake=params$lake,year=params$year)
+}
+
+include_graphics(sprintf("Plots/%s-%s-WQ.png",params$year,params$lake))
+```
+
+## Mean TSI values
+```{r TSI plot, fig.height=3.5, fig.width=6, message=FALSE, warning=FALSE}
+TSI.plot(data=L2.data,lake=params$lake,year=params$year)
 ```
 
