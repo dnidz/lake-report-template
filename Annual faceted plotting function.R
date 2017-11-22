@@ -83,6 +83,10 @@ lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2"){
              Year<=year,
              Month>=5,
              Month<=10) %>%
+      # Average by month first and then by year to help buffer against data gaps or
+      # years with partial L1 (and all L2) data
+      group_by(Parameter,Year,Lake,Month) %>%
+      summarize(Value=mean(Value,na.rm=T)) %>%
       group_by(Parameter,Year,Lake) %>%
       summarize(Value=mean(Value,na.rm=T))
     

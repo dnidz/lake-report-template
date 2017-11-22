@@ -24,8 +24,11 @@ TSI.plot<-function(data,lake,year) {
            Year<=year,
            Month>=5,
            Month<=10) %>%
+    # Average by month first and then by year to help buffer against data gaps 
+    group_by(Parameter,Year,Lake,Month) %>%
+    summarize(Value=mean(Value,na.rm=T)) %>%
     group_by(Parameter,Year,Lake) %>%
-    summarize(Mean=mean(Value,na.rm=T))
+    summarize(Value=mean(Value,na.rm=T))
   
   # Only include lake/year combos with at least five sampling dates
   # (don't filter per parameter since this will preclude ever doing mean alkalinity or color)
