@@ -2,6 +2,8 @@
 .Rhistory
 .RData
 .Ruserdata
+encoding.Rmd
+test params.R
 *.csv
 *.png
 *.pdf
