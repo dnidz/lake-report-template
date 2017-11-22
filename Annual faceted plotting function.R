@@ -13,8 +13,7 @@
 # no ST = Chlor, TP, TN, NP (L2 except Secchi & Temp)
 lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2"){
  
-  
-  has.trends=F
+  has.trends<-F # only the means calculate this, so set here for individual.
   
   if(params.list=="L2") {
     params.list<-c("Temperature",
@@ -117,9 +116,13 @@ lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2"){
       full_join(year.list,by=c("Parameter","Year")) %>%
       left_join(y,by="Parameter") 
       
-
-    start<-min(d$Year,na.rm=T)
-    end<-max(d$Year,na.rm=T)
+    # Adding the year.list added lots of NA years, so finding start/end requires filtering
+    start<-d %>%
+      filter(!is.na(Value)) %>%
+      {min(.$Year,na.rm=T)}
+    end<-d %>%
+      filter(!is.na(Value)) %>%
+      {max(.$Year,na.rm=T)} 
     
     # Trendlines
     trends<-lake.trend.seasonal(data,lake,year,params.list,overall.only=T) %>%

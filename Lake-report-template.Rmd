@@ -26,6 +26,7 @@ library(kableExtra)
 library(RcppTOML)
 library(NADA)
 library(EnvStats)
+library(rkt)
 options(knitr.table.format = "html",knitr.kable.NA = '')
 options(scipen=999)
 source("Multiplot function.R")
@@ -215,12 +216,21 @@ include_graphics(sprintf("%s/Plots/%s-%s-WQ.png",params$year,params$year,params$
 ```
 
 ## Trends over time
-We tested for trends in the average May-October values.
+We tested for trends using a seasonal Kendall test (p<0.05). 
 ```{r Trend analysis, message=FALSE, warning=FALSE}
-trends<-lake.trend(data=L2.data,
-                   lake=params$lake,year=params$year,params.list="L2")
+trends<-lake.trend.seasonal(data=L2.data,
+                            lake=params$lake,
+                            year=params$year,
+                            params.list="L2",
+                            overall.only=F)
+trends %>%
+  select(-all) %>% # remove the list-column
+  write_csv(sprintf("%s/Tables/%s-%s-alltrends.csv",
+                    params$year,params$year,params$lake))
 
-trends.sig<-filter(trends,p<0.05)
+trends.sig<-trends %>% 
+  filter(p<0.05,
+         Month=="Overall")
 
 has.trends<-nrow(trends.sig)>0
 
@@ -230,7 +240,7 @@ table.trends<-trends.sig %>%
          p=scientific(p,2)
          ) %>%
   select(label,DecadalChange,p) %>%
-  kable(col.names=c("Parameter","Change","p-value"),
+  kable(col.names=c("Parameter","Decadal Change","p-value"),
         caption="Trends - Average change per decade"
   ) %>%
   kable_styling()
