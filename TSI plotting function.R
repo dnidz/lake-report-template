@@ -41,12 +41,9 @@ TSI.plot<-function(data,lake,year) {
     select(-Count)
   
   # Years without data are likely simply skipped -- insert NAs to break the line
-  year.list<-expand.grid(Year=full_seq(d.means$Year,1),
-                         Parameter=params.list) %>%
-    mutate(Parameter=as.character(Parameter))
+  year.list<-tibble(Year=full_seq(d.means$Year,1))
   
   d.TSI<-d.means %>%
-    full_join(year.list,by=c("Year","Parameter")) %>%
     spread(key=Parameter,value=Mean) %>%
     mutate(TSI.Sec=10*(6-(log(Secchi/0.693))),
            TSI.Chl=10*(6-((2.04)-(0.68*log(ChlorophyllA)))/log(2)),
@@ -54,6 +51,7 @@ TSI.plot<-function(data,lake,year) {
     ) %>%
     left_join(trimlist, by=c("Lake","Year")) %>%
     filter(Keep) %>%
+    full_join(year.list,by="Year") %>%
     select(Year,TSI.Sec,TSI.Chl,TSI.TP) %>%
     gather(-Year,key=TSI,value=Value)
   
@@ -86,7 +84,7 @@ TSI.plot<-function(data,lake,year) {
           
     )
   
-  filename<-sprintf("Plots/%s-%s-TSI.png",year,lake)
+  filename<-sprintf("%s/Plots/%s-%s-TSI.png",year,year,lake)
   
   ggsave(p,file=filename,width=6,height=3.5)
     
@@ -94,10 +92,7 @@ TSI.plot<-function(data,lake,year) {
     
 }
 
-data<-L2.data
-year<-2016
-
-TSI.map<-function(data,year) {
+TSI.map<-function(data,lake,year) {
   
   latlong<-read_csv("lakelatlong.csv",
                     col_types=cols(
@@ -127,20 +122,57 @@ TSI.map<-function(data,year) {
            TSI.Chl=10*(6-((2.04)-(0.68*log(ChlorophyllA)))/log(2)),
            TSI.TP=10*(6-(log(48/TotalPhosphorus)/0.693)) # TP in ug/L
     ) %>%
+    mutate(Focus=ifelse(Lake==lake,T,F)) %>%
     left_join(latlong,by="Lake")
   
   pal <- colorNumeric(
     palette = "BuGn",
-    domain = c(0,70))
+    domain = c(20,70))
   
+  # Interactive leaflet
   l<-leaflet(d.TSI) %>% 
+    fitBounds(-122.432533,47.779165, -122.186827,47.248) %>%
     addProviderTiles(providers$CartoDB.Positron) %>%
     addCircleMarkers(color= ~pal(TSI.Chl),
-                     stroke = FALSE, fillOpacity = 1,
+                     stroke = F, fillOpacity = 1,
+                     radius= ~ifelse(Focus, 10, 6),
                      label= ~Lake,
-                     labelOptions=labelOptions(noHide=T,textOnly=T)
+                     labelOptions=lapply(d.TSI$Focus, function(x) {
+                       labelOptions(noHide=T,textOnly= !x)
+                       }),
+                     popup= ~sprintf("%s Chlorophyll-a TSI = %s",year,
+                                     round(TSI.Chl))
+    ) %>%
+    addLegend("topright", pal = pal, values = ~c(20,70),
+              title = "TSI",
+              labFormat = labelFormat(digits=0),
+              opacity = 1
     )
   
+  # # Static ggmap
+  # pad<-0.025
+  # box<-d.TSI %>%
+  #   summarize(left=min(Longitude,na.rm=T)-pad,
+  #             right=max(Longitude,na.rm=T)+pad,
+  #             bottom=min(Latitude,na.rm=T)-pad,
+  #             top=max(Latitude,na.rm=T)+pad
+  #   )
+  # 
+  # toner<-get_stamenmap(bbox=c(box$left,box$bottom,box$right,box$top),
+  #                      maptype="toner-background",
+  #                      zoom=7
+  #                      )
+  # 
+  # s<-ggmap(toner,
+  #          maprange=T,
+  #          base_layer=ggplot(data=d.TSI,aes(x=Longitude,y=Latitude,color=TSI.Chl)))+
+  #   geom_point(size=5)+
+  #   scale_color_gradient(low="lightblue",high="darkgreen")+
+  #   geom_text_repel(aes(label=Lake),color="black",size=3)
+  
+  
+  
+  # Return interactive leaflet for HTML version
   l
   
 }
