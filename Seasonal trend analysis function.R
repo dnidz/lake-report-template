@@ -3,6 +3,7 @@
 # November 21, 2017
 
 library(rkt)
+library(EnvStats)
 
 lake.trend.seasonal<-function(data,lake,year,params.list="L2",overall.only=T) {
   
@@ -26,12 +27,18 @@ lake.trend.seasonal<-function(data,lake,year,params.list="L2",overall.only=T) {
     )
   } # If not defined, leave it alone -- user-specified
   
+  startyear<-1994
+  
   d<-data %>%
     mutate(Year=year(Date),
            Month=month(Date),
-           dDate=decimal_date(Date)) %>%
+           dDate=decimal_date(Date),
+           rYear=Year-startyear+1) %>%
+    # Calculating the intercept with all data >1994 resulted in 
+    # very poor intercepts. Move the data closer to zero with 
+    # "rYear" and calculate true intercept later.
     filter(Lake==lake,
-           Year>=1994,
+           Year>=startyear,
            Year<=year,
            Month>=5,
            Month<=10,
@@ -77,8 +84,60 @@ lake.trend.seasonal<-function(data,lake,year,params.list="L2",overall.only=T) {
   output
   }
   
+  sk.to.df<-function(s) { 
+    output<-tibble( 
+      p=s$p.value["z (Trend)"], 
+      slope=s$estimate["slope"], 
+      intercept=s$estimate["intercept"], 
+      tau=s$estimate["tau"], 
+      z=s$statistic["z (Trend)"], 
+      all=list(s) 
+    )  
+    
+    output 
+  } 
+  
+  sk.to.df.indiv<-function(s) { 
+    output<-tibble( 
+      p=s$p.value, 
+      slope=s$estimate["slope"], 
+      intercept=s$estimate["intercept"], 
+      tau=s$estimate["tau"], 
+      z=s$statistic, 
+      all=list(s) 
+    )  
+    
+    output 
+  } 
+  
+  sk.param<-function(data,param) { 
+    d.param<-data %>% 
+      filter(Parameter==param) 
+    
+    s.overall<-kendallSeasonalTrendTest(data=d.param, 
+                                        Value~Month+rYear) %>% 
+      sk.to.df() %>% 
+      mutate(Parameter=param, 
+             Month="Overall") %>% 
+      select(Parameter,Month,everything()) 
+    
+    s.months<-map_df(5:10, function(x) { 
+      kendallTrendTest(data=filter(d.param,Month==x), 
+                       Value~rYear) %>% 
+        sk.to.df.indiv() 
+    }) %>% 
+      mutate(Month=as.character(5:10), 
+             Parameter=param) %>% 
+      select(Parameter,Month,everything()) 
+    
+    output<-bind_rows(s.overall,s.months) %>%
+      mutate(intercept=slope*(1-startyear)+intercept)
+    
+    output 
+  } 
+  
  
-  trends<-map_df(params.list,rkt.param,data=d) %>%
+  trends<-map_df(params.list,sk.param,data=d) %>%
     mutate(Lake=lake) %>%
     select(Lake,everything())
   
