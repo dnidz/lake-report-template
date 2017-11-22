@@ -121,12 +121,11 @@ lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2"){
     start<-min(d$Year,na.rm=T)
     end<-max(d$Year,na.rm=T)
     
-    # # Trendlines
-    # # Problem -- the EnvStats fn seems to be calculating a bad slope/intercept pair
-    # trends<-lake.trend.seasonal(data,lake,year,params.list) %>%
-    #   filter(p<0.05)
-    # 
-    # has.trends<-nrow(trends)>0
+    # Trendlines
+    trends<-lake.trend.seasonal(data,lake,year,params.list,overall.only=T) %>%
+      filter(p<0.05)
+
+    has.trends<-nrow(trends)>0
   } # end means
 
   # Filter chlorophyll background data
@@ -176,13 +175,13 @@ lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2"){
   }
   
   
-  # if(has.trends) {
-  #   t<-trends %>%
-  #     filter(Parameter %in% params.list) %>%
-  #     left_join(y,by="Parameter")
-  #   
-  #   p<-p+geom_abline(data=t,aes(slope=slope,intercept=intercept),linetype="dashed",size=1)
-  # }
+  if(has.trends) {
+    t<-trends %>%
+      filter(Parameter %in% params.list) %>%
+      left_join(y,by="Parameter")
+
+    p<-p+geom_abline(data=t,aes(slope=slope,intercept=intercept),linetype="dashed",size=1)
+  }
       
   p
 }
