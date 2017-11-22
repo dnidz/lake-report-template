@@ -5,12 +5,45 @@
 library(tidyverse)
 library(stringr)
 
-lake.list<-c("Angle",
+lake.list<-c("Alice",
+             "Allen",
+             "Ames",
+             "Angle",
+             "Beaver-1",
+             "Beaver-2",
              "Boren",
+             "Cottage",
+             "Desire",
+             "Dolloff",
+             "Echo-Shoreline",
+             "Fivemile",
+             "Forbes",
+             "Geneva",
+             "Green-1",
+             "Joy",
+             "Kathleen",
+             "Killarney",
+             "Lucerne",
+             "Marcel",
+             "Margaret",
+             "McDonald",
+             "Morton",
+             "Neilson (Holm)",
+             "Paradise",
+             "Pine",
+             "Pipe",
+             "Retreat",
+             "Sawyer",
+             "Shadow",
+             "Shady",
+             "Spring",
+             "Tuck",
              "Twelve",
-             "Wilderness")
+             "Welcome",
+             "Wilderness"
+)
 
-year<-2016
+year<-2017
 
 reports<-tibble(
   Lake=lake.list,
@@ -23,4 +56,5 @@ reports %>%
   pwalk(rmarkdown::render,
         input="Lake-report-template.Rmd",
         output_format="html_document",
-        output_dir=here::here("Outputs"))
+        output_dir=here::here(sprintf("%s/Outputs",year)),
+        encoding="UTF-8")
