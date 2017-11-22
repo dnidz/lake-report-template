@@ -77,58 +77,8 @@ lake.trend.seasonal<-function(data,lake,year,params.list="L2",overall.only=T) {
   output
   }
   
-  sk.to.df<-function(s) {
-    output<-tibble(
-      p=s$p.value["z (Trend)"],
-      slope=s$estimate["slope"],
-      intercept=s$estimate["intercept"],
-      tau=s$estimate["tau"],
-      z=s$statistic["z (Trend)"],
-      all=list(s)
-    ) 
-
-    output
-  }
-  
-  sk.to.df.indiv<-function(s) {
-    output<-tibble(
-      p=s$p.value,
-      slope=s$estimate["slope"],
-      intercept=s$estimate["intercept"],
-      tau=s$estimate["tau"],
-      z=s$statistic,
-      all=list(s)
-    ) 
-    
-    output
-  }
-  
-  sk.param<-function(data,param) {
-    d.param<-data %>%
-      filter(Parameter==param)
-    
-    s.overall<-kendallSeasonalTrendTest(data=d.param,
-                                Value~Month+Year) %>%
-      sk.to.df() %>%
-      mutate(Parameter=param,
-             Month="Overall") %>%
-      select(Parameter,Month,everything())
-    
-    s.months<-map_df(5:10, function(x) {
-      kendallTrendTest(data=filter(d.param,Month==x),
-                       Value~Year) %>%
-        sk.to.df.indiv()
-    }) %>%
-      mutate(Month=as.character(5:10),
-             Parameter=param) %>%
-      select(Parameter,Month,everything())
-    
-    output<-bind_rows(s.overall,s.months)
-    
-    output
-    }
-  
-  trends<-map_df(params.list,sk.param,data=d) %>%
+ 
+  trends<-map_df(params.list,rkt.param,data=d) %>%
     mutate(Lake=lake) %>%
     select(Lake,everything())
   
