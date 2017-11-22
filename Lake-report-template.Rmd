@@ -3,7 +3,7 @@ output:
   html_document: default
 params:
   lake: Wilderness
-  year: 2016
+  year: 2017
 ---
 
 ```{r setup, include=FALSE}
@@ -17,14 +17,82 @@ library(tidyverse)
 library(stringr)
 library(lubridate)
 library(Rgnuplot)
+library(leaflet)
+library(ggmap)
+library(ggrepel)
+library(trend)
+library(scales)
+library(kableExtra)
+library(RcppTOML)
+library(NADA)
+library(EnvStats)
+options(knitr.table.format = "html",knitr.kable.NA = '')
+options(scipen=999)
 source("Multiplot function.R")
 source("Annual plotting function.R")
 source("Annual faceted plotting function.R")
 source("Hydrology plotting function.R")
 source("TSI plotting function.R")
+source("Trend analysis function.R")
+source("Seasonal trend analysis function.R")
 ```
 
-```{r Set up L2 data, message=FALSE, warning=TRUE}
+```{r Read in text chunks, message=FALSE, warning=TRUE, include=FALSE}
+# Set up a plain .txt file for each lake and year.
+# I'm using TOML structure, where each section has the name, equals sign, and 
+# the text is within sets of three *single* quotes:
+
+# Intro='''
+# Text goes here and can contain any characters and can be multiple paragraphs.
+#'''
+
+# The order of text chunks doesn't matter, but their names do (must capitalize!).
+# Currently used values are:
+# Intro, Hydrology, WQ, Trends, TSI, TSImap
+
+text.file<-sprintf("%s/Text/",params$year) %>%
+  list.files() %>%
+  {.[str_detect(.,"octopus")]}
+
+if(length(text.file)>0) {
+  text.input<-sprintf("%s/Text/%s",params$year,text.file) %>%
+    parseTOML()
+  
+  t<-map(text.input,str_replace_all,"\\\\n","\n\n") %>%
+    str_trim() %>%
+    as.list()
+  names(t)<-names(text.input)
+} else {t<-NULL}
+  
+# Use text chunks as inline text: `r if(!is.NULL(t$Intro)) t$Intro`
+```
+
+```{r Set up parameter labels and plotting maxima, message=FALSE, include=FALSE}
+# keepCap - if using text not at beginning of label, keep capitals or convert to lower?
+y<-tribble(
+  ~Parameter, ~text, ~units, ~max, ~keepCap,
+  "Secchi", "Secchi depth","(m)",10,T,
+  "Temperature", "Water temperature","(°C)",30,F,
+  "ChlorophyllA", "Chlorophyll-a","(µg/L)",40,F,
+  "TotalNitrogen", "Total nitrogen","(µg/L)",1250,F,
+  "TotalPhosphorus", "Total phosphorus","(µg/L)",100,F,
+  "NPRatio", "N:P ratio","",100,T,
+  "UV.Absorbance", "UV254 absorbance","",1,T,
+  'TotalAlk', "Total alkalinity","",25,F
+) %>%
+  mutate(text=ordered(text,levels=str_c(text)),
+         label=str_trim(sprintf("%s %s",text,units)),
+         label=ordered(label,levels=str_c(label)),
+         meanslabel=str_trim(sprintf("Average %s %s",
+                                     ifelse(keepCap,paste(text),str_to_lower(text)),
+                                     units)),
+         meanslabel=ordered(meanslabel,levels=str_c(meanslabel))
+  )
+
+```
+
+
+```{r Set up L2 data, message=FALSE, warning=TRUE, include=FALSE}
 # This looks for a "Small Lake Data" csv file in the directory
 # from the web/SQL database
 
@@ -67,7 +135,7 @@ L2.data<-L2.input %>%
 
 ```
 
-```{r set up L1 weekly data, message=FALSE}
+```{r set up L1 weekly data, message=FALSE, include=FALSE}
 weekly.file<-list.files() %>%
   {Filter(x=.,function(d) str_detect(d,"Small Lake Weekly Data"))}
 weekly.input<-read_csv(weekly.file,
@@ -88,15 +156,16 @@ weekly.data<-weekly.input %>%
          key=Parameter,value=Value) %>%
   mutate(Depth=1)
 
+# Does this lake have weekly data
 weekly.lakes<-weekly.data %>%
   filter(year(Date)==params$year) %>%
   .$Lake %>%
   unique()
 
-
+is.weekly<-params$lake %in% weekly.lakes
 ```
 
-```{r Set up L1 daily data, message=FALSE}
+```{r Set up L1 daily data, message=FALSE, include=FALSE}
 daily.file<-list.files() %>%
   {Filter(x=.,function(d) str_detect(d,"Small Lake Daily Data"))}
 daily.data<-read_csv(daily.file,
@@ -112,40 +181,75 @@ daily.data<-read_csv(daily.file,
   mutate(Date=as.Date(Date))
 # doesn't need to be in gathered format
 
+# Does this lake have daily data?
 daily.lakes<-daily.data %>%
     filter(year(Date)==params$year) %>%
   .$Lake %>%
   unique()
-```
 
+is.daily<-params$lake %in% daily.lakes
+```
 
 # Small Lake Report: `r params$lake` `r params$year`
 
-## Hydrology: Lake level and precipitation
+`r if(!is.null(t$Intro)) t$Intro`
+
+## `r if(is.daily) paste("Hydrology: Lake level and precipitation")`
 ```{r Level & precip plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
-# Detect if hydro data exists, and plot
-if(params$lake %in% daily.lakes) {
-  hydro.plot(data=daily.data,lake=params$lake,year=params$year)
-} else {
-  paste("No hydrology data for this lake")
-}
+if(is.daily) hydro.plot(data=daily.data,lake=params$lake,year=params$year) 
 ```
 
 ## Water quality plots and annual means
+Data for `r params$lake` are on the blue line. Data for all other lakes are the grey points in the background.
+Any statistically discernable trends are indicated with a dashed black line.
 ```{r Water quality plots, message=FALSE, warning=FALSE}
 # Detect if L1 lake, and plot accordingly
 
-if(params$lake %in% weekly.lakes) { 
-  lake.plot.L1(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year)
+if(is.weekly) { 
+  lake.plot.L1(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
 } else {
-  lake.plot.L2(data=L2.data,lake=params$lake,year=params$year)
+  lake.plot.L2(data=L2.data,lake=params$lake,year=params$year,y=y)
 }
 
-include_graphics(sprintf("Plots/%s-%s-WQ.png",params$year,params$lake))
+include_graphics(sprintf("%s/Plots/%s-%s-WQ.png",params$year,params$year,params$lake))
 ```
 
-## Mean TSI values
+## Trends over time
+We tested for trends in the average May-October values.
+```{r Trend analysis, message=FALSE, warning=FALSE}
+trends<-lake.trend(data=L2.data,
+                   lake=params$lake,year=params$year,params.list="L2")
+
+trends.sig<-filter(trends,p<0.05)
+
+has.trends<-nrow(trends.sig)>0
+
+table.trends<-trends.sig %>%
+  left_join(y,by="Parameter") %>%
+  mutate(DecadalChange=signif(slope*10,3),
+         p=scientific(p,2)
+         ) %>%
+  select(label,DecadalChange,p) %>%
+  kable(col.names=c("Parameter","Change","p-value"),
+        caption="Trends - Average change per decade"
+  ) %>%
+  kable_styling()
+
+if(has.trends) table.trends
+```
+`r if(!has.trends) paste(params$lake,"does not have any statistically discernable trends over time.")`
+
+## Trophic State Indices
+The Trophic State Index (TSI) is a common index of a lake's biological productivity. TSI values are calculated from Secchi depth, chlorophyll-a concentrations, and total phosphorus concentrations. These three TSI estimates are all scaled between 0 and 100.
+
+*Oligotrophic* lakes (TSI <40) are very clear, with low nutrient concentrations and low algal growth. These are often mountain lakes, or lakes in undisturbed forests. *Eutrophic* lakes (TSI >50) have cloudy water, with high nutrient concentrations and high algal growth. These are often highly altered lakes, and may have frequent algal blooms. *Mesotrophic* lakes (TSI 40-50) are in the middle, with fairly clear water, and moderate nutrient concentrations and algal growth. Mesotrophic lakes are common in lowland western Washington, especially in areas with some development along the shoreline and in the watershed. 
+
 ```{r TSI plot, fig.height=3.5, fig.width=6, message=FALSE, warning=FALSE}
 TSI.plot(data=L2.data,lake=params$lake,year=params$year)
 ```
 
+## Lake trophic states
+These are the lakes in the King County Lake Stewardship program in `r params$year`. The color of each circle indicates the lake's average chlorophyll-a TSI value for the year.
+```{r TSI map, fig.height=10, fig.width=8, message=FALSE, warning=FALSE}
+TSI.map(data=L2.data,lake=params$lake,year=params$year)
+```
