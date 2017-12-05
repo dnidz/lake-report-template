@@ -136,6 +136,7 @@ lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2"){
   } # end means
 
   # Filter chlorophyll background data
+  # For means, this filters after the means are calculated
   d.background<-d.background %>%
     filter(Parameter!="ChlorophyllA" | Value<chlor.max,
            !is.na(Value))
@@ -179,6 +180,10 @@ lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2"){
   
   if("NPRatio" %in% params.list) {
     p<-p+geom_hline(data=filter(d,Parameter=="NPRatio"),aes(yintercept=25),color="grey",size=0.5)
+  }
+  
+  if("TotalAlk" %in% params.list) {
+    p<-p+geom_hline(data=filter(d,Parameter=="TotalAlk"),aes(yintercept=20),color="grey",size=0.5)
   }
   
   
