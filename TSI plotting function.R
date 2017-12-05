@@ -47,7 +47,7 @@ TSI.plot<-function(data,lake,year) {
   year.list<-tibble(Year=full_seq(d.means$Year,1))
   
   d.TSI<-d.means %>%
-    spread(key=Parameter,value=Mean) %>%
+    spread(key=Parameter,value=Value) %>%
     mutate(TSI.Sec=10*(6-(log(Secchi/0.693))),
            TSI.Chl=10*(6-((2.04)-(0.68*log(ChlorophyllA)))/log(2)),
            TSI.TP=10*(6-(log(48/TotalPhosphorus)/0.693)) # TP in ug/L
@@ -87,10 +87,6 @@ TSI.plot<-function(data,lake,year) {
           
     )
   
-  filename<-sprintf("%s/Plots/%s-%s-TSI.png",year,year,lake)
-  
-  ggsave(p,file=filename,width=6,height=3.5)
-    
   p
     
 }
@@ -100,6 +96,7 @@ TSI.map<-function(data,lake,year) {
   latlong<-read_csv("lakelatlong.csv",
                     col_types=cols(
                       Lake = col_character(),
+                      LakeName=col_character(),
                       Latitude = col_double(),
                       Longitude = col_double()
                     ))

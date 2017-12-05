@@ -1,0 +1,40 @@
+---
+title: "Pretty tables"
+author: "Daniel Nidzgorski"
+date: "December 4, 2017"
+header-includes: \usepackage{caption}
+output: pdf_document
+---
+\captionsetup[table]{labelformat=empty}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Read in tables from csv files already generated.
+Then reformat the kables for printing.
+
+
+
+```{r Print pretty tables, message=FALSE, warning=FALSE, include=FALSE}
+
+if(params$format=="latex") {
+  
+  kable_as_image(summary.table,
+                 filename=sprintf("%s/Tables/%s-%s-summary",
+                                  params$year,params$year,params$lake),
+                 file_format="jpeg")
+  
+  kable_as_image(table.trends,
+                 filename=sprintf("%s/Tables/%s-%s-trends",
+                                  params$year,params$year,params$lake),
+                 file_format="jpeg")
+  
+  kable_as_image(profile.table,
+                 filename=sprintf("%s/Tables/%s-%s-profile",
+                                  params$year,params$year,params$lake),
+                 file_format="jpeg")
+  
+  
+}
+```

@@ -37,10 +37,6 @@ hydro.plot<-function(data,lake,year) {
           axis.title.y=element_text(size=11)
     )
     
-    filename<-sprintf("%s/Plots/%s-%s-hydro.png",year,year,lake)
-    
-    ggsave(p,filename=filename,width=6,height=3)
-
     p
 
 }

@@ -24,6 +24,8 @@ lake.trend<-function(data,lake,year,params.list="L2") {
                    "TotalNitrogen",
                    "NPRatio"
     )
+  } else if (params.list=="all") {
+    params.list<-unique(data$Parameter)
   } # If not defined, leave it alone -- user-specified
   
   d.means<-data %>%
