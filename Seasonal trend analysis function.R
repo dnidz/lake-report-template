@@ -25,6 +25,8 @@ lake.trend.seasonal<-function(data,lake,year,params.list="L2",overall.only=T) {
                    "TotalNitrogen",
                    "NPRatio"
     )
+  } else if (params.list=="all") {
+    params.list<-unique(data$Parameter)
   } # If not defined, leave it alone -- user-specified
   
   startyear<-1994
@@ -40,49 +42,50 @@ lake.trend.seasonal<-function(data,lake,year,params.list="L2",overall.only=T) {
     filter(Lake==lake,
            Year>=startyear,
            Year<=year,
-           Month>=5,
-           Month<=10,
-           Parameter %in% params.list)
+           # Month>=5,
+           # Month<=10,
+           Parameter %in% params.list,
+           !is.na(Value))
   
-  rkt.to.df<-function(r) {
-    output<-tibble(
-      p=r$sl,
-      slope=r$B,
-      tau=r$tau,
-      score=r$S,
-      var.score=r$varS)
-    
-    output
-  }
-  
-  rkt.param<-function(data,param) {
-    d.param<-data %>%
-      filter(Parameter==param)
-    
-    r.overall<-rkt(date=d.param$dDate,
-           y=d.param$Value,
-           block=d.param$Month,
-           rep="a") %>%
-      rkt.to.df() %>%
-      mutate(Month="Overall",
-             Parameter=param) %>%
-      select(Parameter,Month,everything())
-    
-    r.months<-map_df(5:10, function(x) {
-      rkt(date=filter(d.param,Month==x)$dDate,
-          y=filter(d.param,Month==x)$Value,
-          rep="a") %>%
-        rkt.to.df()
-    }) %>%
-      mutate(Month=as.character(5:10),
-             Parameter=param) %>%
-      select(Parameter,Month,everything())
-           
-  
-  output<-bind_rows(r.overall,r.months)
-  
-  output
-  }
+  # rkt.to.df<-function(r) {
+  #   output<-tibble(
+  #     p=r$sl,
+  #     slope=r$B,
+  #     tau=r$tau,
+  #     score=r$S,
+  #     var.score=r$varS)
+  #   
+  #   output
+  # }
+  # 
+  # rkt.param<-function(data,param) {
+  #   d.param<-data %>%
+  #     filter(Parameter==param)
+  #   
+  #   r.overall<-rkt(date=d.param$dDate,
+  #          y=d.param$Value,
+  #          block=d.param$Month,
+  #          rep="a") %>%
+  #     rkt.to.df() %>%
+  #     mutate(Month="Overall",
+  #            Parameter=param) %>%
+  #     select(Parameter,Month,everything())
+  #   
+  #   r.months<-map_df(5:10, function(x) {
+  #     rkt(date=filter(d.param,Month==x)$dDate,
+  #         y=filter(d.param,Month==x)$Value,
+  #         rep="a") %>%
+  #       rkt.to.df()
+  #   }) %>%
+  #     mutate(Month=as.character(5:10),
+  #            Parameter=param) %>%
+  #     select(Parameter,Month,everything())
+  #          
+  # 
+  # output<-bind_rows(r.overall,r.months)
+  # 
+  # output
+  # }
   
   sk.to.df<-function(s) { 
     output<-tibble( 
@@ -121,13 +124,23 @@ lake.trend.seasonal<-function(data,lake,year,params.list="L2",overall.only=T) {
              Month="Overall") %>% 
       select(Parameter,Month,everything()) 
     
-    s.months<-map_df(5:10, function(x) { 
+    # Months with at least three separate years of data
+    monthlist<-d.param %>%
+      group_by(Month) %>%
+      summarize(numYears=length(unique(Year))) %>%
+      filter(numYears>=3) %>%
+      .$Month %>%
+      unique()
+    
+    s.months<-map_df(monthlist, function(x) { 
       kendallTrendTest(data=filter(d.param,Month==x), 
                        Value~rYear) %>% 
-        sk.to.df.indiv() 
+        sk.to.df.indiv() %>%
+        mutate(Month=x)
     }) %>% 
-      mutate(Month=as.character(5:10), 
-             Parameter=param) %>% 
+      arrange(Month) %>%
+      mutate(Parameter=param,
+             Month=as.character(Month)) %>% 
       select(Parameter,Month,everything()) 
     
     output<-bind_rows(s.overall,s.months) %>%

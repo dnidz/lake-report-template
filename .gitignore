@@ -4,6 +4,7 @@
 .Ruserdata
 encoding.Rmd
 test params.R
+Thumbs.db
 *.csv
 *.png
 *.pdf

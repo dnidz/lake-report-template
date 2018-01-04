@@ -11,7 +11,7 @@
 # L2 = Secchi, Temp, Chlor, TP, TN, NP
 # ST = Secchi & Temp
 # no ST = Chlor, TP, TN, NP (L2 except Secchi & Temp)
-lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2"){
+lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2",rev=F){
  
   has.trends<-F # only the means calculate this, so set here for individual.
   
@@ -130,7 +130,8 @@ lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2"){
     
     # Trendlines
     trends<-lake.trend.seasonal(data,lake,year,params.list,overall.only=T) %>%
-      filter(p<0.05)
+      filter(p<0.05,
+             slope!=0)
 
     has.trends<-nrow(trends)>0
   } # end means
@@ -191,22 +192,35 @@ lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2"){
     t<-trends %>%
       filter(Parameter %in% params.list) %>%
       left_join(y,by="Parameter")
-
-    p<-p+geom_abline(data=t,aes(slope=slope,intercept=intercept),linetype="dashed",size=1)
+    
+    if(rev){
+      p<-p+
+        scale_y_reverse()+
+        geom_abline(data=t,aes(slope=-slope,intercept=-intercept),linetype="dashed",size=1)
+    } else {
+      p<-p+geom_abline(data=t,aes(slope=slope,intercept=intercept),linetype="dashed",size=1)
+    }
+    
+  } else {
+    if(rev) p<-p+scale_y_reverse()
   }
       
   p
 }
 
 
-# Plot a lake that has only L2 data
-lake.plot.L2<-function(data,lake,year,y) {
+# Plot a lake that has only L2 data this year
+# Still pass L1 data to the means function since it may have 
+# L1 data for past years
+lake.plot.L2<-function(data.L1,data.L2,lake,year,y) {
   
-  p<-lake.plot.facet(data,lake,year,y,wy=F,means=F,params.list="L2")
-  p.rev<-p+scale_y_reverse()
+  p<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=F,params.list="L2",rev=F)
+  p.rev<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=F,params.list="L2",rev=T)
   
-  m<-lake.plot.facet(data,lake,year,y,wy=F,means=T,params.list="L2")
-  m.rev<-m+scale_y_reverse()
+  m<-bind_rows(data.L1,data.L2) %>%
+    lake.plot.facet(lake,year,y,wy=F,means=T,params.list="L2",rev=F)
+  m.rev<-bind_rows(data.L1,data.L2) %>%
+    lake.plot.facet(lake,year,y,wy=F,means=T,params.list="L2",rev=T)
   
   # For tweaking, set width and height once
   w<-6
@@ -242,16 +256,17 @@ lake.plot.L2<-function(data,lake,year,y) {
 # Plot a lake with standard L1 and L2 data
 lake.plot.L1<-function(data.L1,data.L2,lake,year,y) {
   
-  L2<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=F,params.list="noST")
-  temp<-lake.plot.facet(data.L1,lake,year,y,wy=T,means=F,params.list="ST")
-  secchi<-temp+scale_y_reverse()
+  L2<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=F,params.list="noST",rev=F)
+  temp<-lake.plot.facet(data.L1,lake,year,y,wy=T,means=F,params.list="ST",rev=F)
+  secchi<-lake.plot.facet(data.L1,lake,year,y,wy=T,means=F,params.list="ST",rev=T)
 
-  m.L2<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=T,params.list="noST")
+  m.L2<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=T,params.list="noST",rev=F)
   # For secchi and temp means, use both L1 and L2 data since many lakes have a
   # longer L2 record than they do L1
   m.temp<-bind_rows(data.L1,data.L2) %>%
-    lake.plot.facet(lake,year,y,wy=T,means=T,params.list="ST")
-  m.secchi<-m.temp+scale_y_reverse()
+    lake.plot.facet(lake,year,y,wy=T,means=T,params.list="ST",rev=F)
+  m.secchi<-bind_rows(data.L1,data.L2) %>%
+    lake.plot.facet(lake,year,y,wy=T,means=T,params.list="ST",rev=T)
   
   # For tweaking, set width and height once
   w<-6

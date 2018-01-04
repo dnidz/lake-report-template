@@ -46,10 +46,10 @@ lake.list<-c("Alice",
 year<-2017
 
 seed<-tribble( ~Section,
-               "Intro=\'\'\'",
+               "Description=\'\'\'",
                "",
                "\'\'\'",
-               "Hydrology=\'\'\'",
+               "Overview=\'\'\'",
                "",
                "\'\'\'",
                "WQ=\'\'\'",
