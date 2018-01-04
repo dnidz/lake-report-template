@@ -32,14 +32,26 @@ library(rkt)
 options(knitr.table.format="html",knitr.kable.NA = '')
 options(scipen=999)
 source("Multiplot function.R")
-source("Annual plotting function.R")
 source("Annual faceted plotting function.R")
 source("Hydrology plotting function.R")
 source("TSI plotting function.R")
-source("Trend analysis function.R")
 source("Seasonal trend analysis function.R")
 source("Data summary function.R")
 ```
+
+```{r Get lake name, message=FALSE, warning=FALSE, include=FALSE}
+LakeName<-read_csv("lakelatlong.csv",
+                  col_types=cols(
+                    Lake = col_character(),
+                    LakeName = col_character(),
+                    Longitude = col_double(),
+                    Latitude = col_double()
+                  )) %>%
+  filter(Lake==params$lake) %>%
+  .$LakeName %>%
+  str_to_title()
+```
+
 
 ```{r Read in text chunks, message=FALSE, warning=TRUE, include=FALSE}
 # Set up a plain .txt file for each lake and year.
@@ -99,7 +111,6 @@ y<-tribble(
 
 ```
 
-
 ```{r Set up L2 data, message=FALSE, warning=TRUE, include=FALSE}
 # This looks for a "Small Lake Data" csv file in the directory
 # from the web/SQL database
@@ -131,6 +142,16 @@ L2.input<-read_csv(L2.file,
          Date=CollectDate) %>%
   mutate(Date=as.Date(Date))
 
+L2.data<-L2.input %>%
+  gather(-Lake,-Date,-Depth,
+         key=Parameter,value=Value) %>%
+  filter(!str_detect(Parameter,"TSI"), # remove individual TSI values
+         !str_detect(Parameter,"Q")) %>% # remove quals
+  mutate(Value=as.numeric(Value)) %>%
+  filter(!(Parameter=="TotalPhosphorus" & Date<as.Date("1998-01-01")))
+# remove TP before 1998 -- methods change
+
+# Dataframe of L2 qualifiers -- used for profile data
 L2.quals<-L2.input %>%
   gather(-Lake,-Date,-Depth,
          key=Parameter,value=Qual) %>%
@@ -138,6 +159,7 @@ L2.quals<-L2.input %>%
          Parameter!="DepthQ") %>%
   mutate(BelowMDL=str_detect(Qual,"MDL"),
          BelowMDL=ifelse(is.na(BelowMDL),"FALSE",BelowMDL))
+
 L2.quals$Parameter<-plyr::revalue(L2.quals$Parameter,
                                   c("SecchiQ" = "Secchi",
                                     "TempQ" = "Temperature",
@@ -153,13 +175,6 @@ L2.quals$Parameter<-plyr::revalue(L2.quals$Parameter,
                                     "AnatoxinQ" = "Anatoxin",
                                     "MicrocystinQ" = "Microcystin"))
 
-L2.data<-L2.input %>%
-  gather(-Lake,-Date,-Depth,
-         key=Parameter,value=Value) %>%
-  filter(!str_detect(Parameter,"Q")) %>% # remove quals
-  mutate(Value=as.numeric(Value)) %>%
-  filter(!(Parameter=="TotalPhosphorus" & Date<as.Date("1998-01-01")))
-# remove TP before 1998 -- methods change
 ```
 
 ```{r set up L1 weekly data, message=FALSE, include=FALSE}
@@ -185,7 +200,8 @@ weekly.data<-weekly.input %>%
 
 # Does this lake have weekly data
 weekly.lakes<-weekly.data %>%
-  filter(year(Date)==params$year) %>%
+  filter(year(Date)==params$year,
+         !is.na(Value)) %>%
   .$Lake %>%
   unique()
 
@@ -258,54 +274,58 @@ daily.data<-read_csv(daily.file,
 
 # Does this lake have daily data?
 daily.lakes<-daily.data %>%
-    filter(year(Date)==params$year) %>%
+    filter(year(Date)==params$year,
+           !is.na(Precipitation) | !is.na(Level)) %>%
   .$Lake %>%
   unique()
 
 is.daily<-params$lake %in% daily.lakes
 ```
 
+# Small Lake Report: `r LakeName` `r params$year`
 
+`r if(!is.null(t$Description)) t$Description`
 
-# Small Lake Report: `r params$lake` `r params$year`
-
-`r if(!is.null(t$Intro)) t$Intro`
+`r if(!is.null(t$Overview)) t$Overview`
 
 ## Water quality plots and annual means
-Data for `r params$lake` are the blue points connected by the blue line. Any gaps in the blue line indicate that one or more sampling dates were missed. To provide some context for these values, the grey points in the background are results for all other lakes in the Lake Stewardship program.
-Any statistically discernable trends are indicated with a dashed black line, and described further in the next section.
+Data for `r LakeName` are the blue points connected by the blue line. Any gaps in the blue line indicate missed samples. To provide some context for these values, the grey points in the background are results for all other lakes in the Lake Stewardship program.
+
+All average values are May-October averages. `r if(is.weekly) paste("Although Secchi depth and water temperature are currently measured year-round, some years in the dataset have only summer and fall measurements. Graphing May-October averages makes it possible to compare data across all years, as well as to compare with other lakes that have only summer and fall measurements. ")`Any statistically discernable trends are drawn with a dashed black line, and described further in the next section.
 ```{r Water quality plots, message=FALSE, warning=FALSE}
 # Detect if L1 lake, and plot accordingly
+# Note that means always include L1 and L2 data for consistency -- 
+# some lakes aren't L1 this year but were in the past.
+# Even though the means are May-October, can cause differences with trends significance.
 
 if(is.weekly) { 
   lake.plot.L1(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
 } else {
-  lake.plot.L2(data=L2.data,lake=params$lake,year=params$year,y=y)
+  lake.plot.L2(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
 }
 
 include_graphics(sprintf("%s/Plots/%s-%s-WQ.png",params$year,params$year,params$lake))
 ```
 
+`r if(!is.null(t$WQ)) t$WQ`
+
 ## Trends over time
 ```{r Trend analysis, message=FALSE, warning=FALSE}
-trends<-lake.trend.seasonal(data=L2.data,
+trends<-lake.trend.seasonal(data=bind_rows(weekly.data,L2.data),
                             lake=params$lake,
                             year=params$year,
                             params.list="L2",
-                            overall.only=F)
-trends %>%
-  select(-all) %>% # remove the list-column
-  write_csv(sprintf("%s/Tables/%s-%s-alltrends.csv",
-                    params$year,params$year,params$lake))
+                            overall.only=T)
 
 trends.sig<-trends %>% 
   filter(p<0.05,
-         Month=="Overall")
+         slope!=0)
 
 has.trends<-nrow(trends.sig)>0
 
 table.trends<-trends.sig %>%
   left_join(y,by="Parameter") %>%
+  arrange(label) %>%
   mutate(DecadalChange=signif(slope*10,2),
          p=scientific(p,2)
          ) %>%
@@ -313,12 +333,15 @@ table.trends<-trends.sig %>%
   kable(col.names=c("Parameter","Change per Decade","p-value")
   ) %>%
   kable_styling(full_width=F)
+
 ```
-To understand how the lake has been changing over time, we tested for trends using a seasonal Kendall test (p<0.05). 
-`r if(!has.trends) paste(params$lake,"does not have any statistically discernable trends over time.")`
-`r if(has.trends) paste("Results are presented as an average rate of change per decade.")`
+To understand how `r LakeName` has been changing over time, we tested water-quality parameters for trends using a seasonal Kendall test. 
+`r if(!has.trends) paste(LakeName,"does not have any statistically discernable trends (p<0.05) over time.")`
+`r if(has.trends) paste("Below are the statistically discernable trends (p<0.05). Results are presented as an average rate of change per decade.")`
 
 `r if(has.trends) table.trends`
+
+`r if(!is.null(t$Trends)) t$Trends`
 
 ## Trophic State Indices
 The Trophic State Index (TSI) is a common index of a lake's biological productivity. TSI values are calculated from Secchi depth, chlorophyll-a concentrations, and total phosphorus concentrations. These three TSI estimates are all scaled between 0 and 100.
@@ -334,6 +357,8 @@ ggsave(TSI,
 
 TSI
 ```
+
+`r if(!is.null(t$TSI)) t$TSI`
 
 ## Lake trophic states
 These are the lakes in the King County Lake Stewardship program in `r params$year`. The color of each circle indicates the lake's average chlorophyll-a TSI value for the year.
@@ -392,7 +417,7 @@ if(is.daily) {
 ```
 
 ## Water column profile
-In May and August, water was collected at the mid-lake sampling station from three depths in a water-column profile: 1m, the middle depth of the water column, and 1m from the lake bottom.
+In May and August, water was collected at the mid-lake sampling station from three depths in a water-column profile: 1 m, the middle depth of the water column, and 1 m from the lake bottom.
 ```{r Profile table}
 profile.dates<-L2.data %>%
   filter(year(Date)==params$year,
@@ -416,9 +441,12 @@ profile<-L2.data %>%
                           "OPO4")
   ) %>%
   left_join(L2.quals,by = c("Lake", "Date", "Depth", "Parameter")) %>%
-  mutate(Value=as.character(Value),
+  mutate(Value=ifelse(Parameter=="TotalNitrogen",
+                      round(Value,0),
+                      formatC(round(Value,1),digits=1,format="f")),
+         Value=as.character(Value),
          Value=ifelse(BelowMDL,sprintf("(%s)",Value),Value),
-         Value=ifelse(is.na(Value),"--",Value)) %>%
+         Value=ifelse(Value=="NA","--",Value)) %>%
   select(Lake,Date,Depth,Parameter,Value) %>%
   spread(key=Parameter,value=Value) %>%
   select(Date,Depth,Temperature,ChlorophyllA,PheophytinA,
@@ -428,38 +456,30 @@ profile<-L2.data %>%
 write_csv(profile,sprintf("%s/Tables/%s-%s-profile.csv",
                           params$year,params$year,params$lake))
 
-display.dates<-profile.dates %>%
-  mutate(Year=year(Date),
-         Month=month(Date),
-         Day=day(Date),
-         DisplayDate=sprintf("%s/%s/%s",Month,Day,Year)) %>%
-  .$DisplayDate
-
-depths<-profile.dates$nDepths
-
 profile.table<-profile %>%
+  mutate(DisplayDate=sprintf("%s/%s/%s",month(Date),day(Date),year(Date)),
+         DisplayDate=ifelse(Depth==1,DisplayDate,"")
+  )%>%
+  select(DisplayDate,everything()) %>%
   select(-Date) %>%
-  kable(col.names=c("Depth","Temp","Chlor","Pheo","TN","NO~2/3~","NH~3~","TP","OPO~4~")
+  kable(col.names=c("Date","Depth","Temp","Chlor","Pheo","TN","NH~3~","NO~2/3~","TP","OPO~4~"),
+        align=c("l","r","r","r","r","r","r","r","r","r")
   ) %>%
   kable_styling(full_width=F) %>%
-  add_header_above(c("(m)","(°C)","(µg/L)"=7),bold=F)%>%
-  group_rows(display.dates[[1]],1,depths[[1]]) 
-
-if(nrow(profile.dates)>1) {
-  profile.table<-profile.table %>%
-    group_rows(display.dates[[2]],1+depths[[1]],depths[[1]]+depths[[2]]) 
-}
+  column_spec(1,bold=T) %>%
+  add_footnote(notation="symbol",
+               "Parameter abbreviations are: chlorophyll-a (Chlor), pheophytin (Pheo), total nitrogen (TN), nitrate/nitrite, ammonia (NH3), total phosphorus (TP), orthophosphate (OPO4). Depth is in m, temperature is in °C, and all other parameters are in µg/L. Dashes indicate parameters that were not analyzed for a given sample. Values below the method detection limit (MDL) are enclosed in parentheses and have the value of the MDL substituted."
+               )
 
 
 
 profile.table
 
-profile.note.text<-"Parameter abbreviations are: chlorophyll-a (Chlor), pheophytin (Pheo), total nitrogen (TN), nitrate/nitrite, ammonia (NH3), total phosphorus (TP), orthophosphate (OPO4). Dashes indicate parameters that were not analyzed for a given sample. Values below the method detection limit (MDL) are enclosed in parentheses and have the value of the MDL substituted."
-
-profile.note<-text_spec(profile.note.text,font_size=12)
+# profile.note.text<-"Parameter abbreviations are: chlorophyll-a (Chlor), pheophytin (Pheo), total nitrogen (TN), nitrate/nitrite, ammonia (NH3), total phosphorus (TP), orthophosphate (OPO4). Dashes indicate parameters that were not analyzed for a given sample. Values below the method detection limit (MDL) are enclosed in parentheses and have the value of the MDL substituted."
+# 
+# profile.note<-paste(text_spec(profile.note.text,font_size=12))
 
 ```
->`r paste(profile.note)`
 
 ```{r Set up UV and alkalinity, message=FALSE, warning=FALSE, include=FALSE}
 
@@ -483,9 +503,9 @@ avg.UV<-L2.data %>%
 
 
 ## Total alkalinity
-A lake’s ability to resist acidification, also called its buffering capacity, is measured as “total alkalinity.” Lakes with total alkalinity less than 20 mg CaCO~3~ are considered sensitive to acidification. We measured total alkalinity in May and August (on profile-sampling days). In `r paste(params$year)`, the average total alkalinity was `r paste(avg.alk)` mg CaCO~3~. `r if(!is.null(t$Alkalinity)) t$Alkalinity`
+A lake’s ability to resist acidification, also called its buffering capacity, is measured as “total alkalinity.” Lakes with total alkalinity less than 20 mg CaCO~3~ are considered sensitive to acidification. We measured total alkalinity in May and August (on profile-sampling days). In `r params$year`, the average total alkalinity was `r avg.alk` mg CaCO~3~. `r if(!is.null(t$Alkalinity)) t$Alkalinity`
 
-The blue points and line are average alkalinity values for `r paste(params$lake)`. Grey points in the background are results for all other lakes in the Lake Stewardship program.
+The blue points and line are average alkalinity values for `r LakeName`. Grey points in the background are results for all other lakes in the Lake Stewardship program.
 
 ```{r Alkalinity plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
 alk.plot<-lake.plot.facet(L2.data,params$lake,params$year,y,wy=F,means=T,params.list="TotalAlk")
@@ -498,9 +518,9 @@ alk.plot
 ```
 
 ## Water color
-Water color affects a lake’s water clarity (and Secchi depth). Water color is measured by shining a specific wavelength of ultraviolet light (254 nm) through a filtered water sample and measuring the percent that was absorbed. We measured UV254 absorbance in May and August (on profile-sampling days). In `r paste(params$year)`, the average UV254 absorbance was `r paste(avg.UV)`, on a scale where 0 is no absorbance (perfectly clear) and 1 is complete absorbance (perfectly opaque). `r if(!is.null(t$UV)) t$UV`
+Water color affects a lake’s water clarity (and Secchi depth). Water color is measured by shining a specific wavelength of ultraviolet light (254 nm) through a filtered water sample and measuring the percent that was absorbed. We measured UV254 absorbance in May and August (on profile-sampling days). In `r params$year`, the average UV254 absorbance was `r avg.UV`, on a scale where 0 is no absorbance (perfectly clear) and 1 is complete absorbance (perfectly opaque). `r if(!is.null(t$UV)) t$UV`
 
-The blue points and line are average UV absorbance values for `r paste(params$lake)`. Grey points in the background are results for all other lakes in the Lake Stewardship program.
+The blue points and line are average UV absorbance values for `r LakeName`. Grey points in the background are results for all other lakes in the Lake Stewardship program.
 
 ```{r UV plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
 UV.plot<-lake.plot.facet(L2.data,params$lake,params$year,y,wy=F,means=T,params.list="UV254")
@@ -510,5 +530,56 @@ ggsave(UV.plot,
        width=6,height=3)
 
 UV.plot
+```
+
+## Trend analysis
+Below are the complete results of the seasonal-Kendall trend analysis, for all parameters at 1 m depth. In addition to the overall results, individual months' results are also shown. This can help illustrate what months are driving an overall trend.
+
+```{r Full trend analysis}
+
+alltrends<-lake.trend.seasonal(data=filter(bind_rows(weekly.data,L2.data),
+                                           !Parameter %in% c("Microcystin","Anatoxin")),
+                            lake=params$lake,
+                            year=params$year,
+                            params.list="all",
+                            overall.only=F)
+
+
+write_csv(select(alltrends,-all),
+          sprintf("%s/Tables/%s-%s-alltrends.csv",params$year,params$year,params$lake))
+
+alltrends.table.data<-alltrends %>%
+  left_join(y,by="Parameter") %>%
+  mutate(sig=ifelse(p<0.05 & slope!=0,T,F),
+         DecadalChange=round(slope*10,2),
+         p=scientific(p,2) # This converts p to a character -- do p<0.05 before
+  ) %>%
+  mutate(tablelabel=ifelse(Month=="Overall",as.character(label),NA)) %>%
+  arrange(label)
+  
+alltrends.table<-alltrends.table.data %>%
+  select(tablelabel,Month,DecadalChange,p) %>%
+  kable(col.names=c("Parameter","Month","Change per Decade","p-value"),
+        escape=F
+  ) %>%
+  kable_styling(full_width=F) %>%
+  row_spec(which(alltrends.table.data$sig),bold=T)
+
+when.sampled<-bind_rows(weekly.data,L2.data) %>%
+  filter(Lake==params$lake,
+         Parameter %in% c("Secchi","Temperature"),
+         !is.na(Value)) %>%
+  mutate(Year=year(Date),
+         Month=month(Date)) %>%
+  group_by(Parameter,Year,Month) %>%
+  summarize(n=n()) %>%
+  spread(key=Month,value=n)
+
+write_csv(when.sampled,
+          sprintf("%s/Tables/%s-%s-whensampled.csv",params$year,params$year,params$lake))
+
+
+alltrends.table
+
 ```
 
