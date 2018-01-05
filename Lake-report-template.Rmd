@@ -5,6 +5,7 @@ output:
 params:
   lake: Wilderness
   year: 2017
+  save: TRUE
 ---
 
 
@@ -304,7 +305,7 @@ if(is.weekly) {
   lake.plot.L2(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
 }
 
-include_graphics(sprintf("%s/Plots/%s-%s-WQ.png",params$year,params$year,params$lake))
+include_graphics(sprintf("Tmp/Plots/%s-%s-WQ.png",params$year,params$lake))
 ```
 
 `r if(!is.null(t$WQ)) t$WQ`
@@ -351,9 +352,11 @@ The Trophic State Index (TSI) is a common index of a lake's biological productiv
 ```{r TSI plot, fig.height=3.5, fig.width=6, message=FALSE, warning=FALSE}
 TSI<-TSI.plot(data=L2.data,lake=params$lake,year=params$year)
 
-ggsave(TSI,
-       file=sprintf("%s/Plots/%s-%s-TSI.png",params$year,params$year,params$lake),
-       width=6,height=3.5)
+if(params$save) {
+  ggsave(TSI,
+         file=sprintf("%s/Plots/%s-%s-TSI.png",params$year,params$year,params$lake),
+         width=6,height=3.5)
+}
 
 TSI
 ```
@@ -384,9 +387,11 @@ if(is.weekly) {
                        "May-October statistics"=nrow(summary.L2)
     ))
   
-  write_csv(bind_rows(summary.L1,summary.L2),
-            sprintf("%s/Tables/%s-%s-summary.csv",
-                    params$year,params$year,params$lake))
+  if(params$save) {
+    write_csv(bind_rows(summary.L1,summary.L2),
+              sprintf("%s/Tables/%s-%s-summary.csv",
+                      params$year,params$year,params$lake))
+  }
   
   } else {
   summary.L2<-lake.data.summary(L2.data,params$lake,params$year,y,wy=F,params.list="L2")
@@ -396,8 +401,10 @@ if(is.weekly) {
     ) %>%
     kable_styling(full_width=F)
   
-  write_csv(summary.L2,sprintf("%s/Tables/%s-%s-alltrends.csv",
-                    params$year,params$year,params$lake))
+  if(params$save) {
+    write_csv(summary.L2,sprintf("%s/Tables/%s-%s-alltrends.csv",
+                                 params$year,params$year,params$lake))
+  }
   }
 
 summary.table
@@ -408,9 +415,11 @@ summary.table
 if(is.daily) { 
   hydro<-hydro.plot(data=daily.data,lake=params$lake,year=params$year)
   
+  if(params$save) {
   ggsave(hydro,
          file=sprintf("%s/Plots/%s-%s-hydro.png",params$year,params$year,params$lake),
          width=6,height=3)
+  }
   
   hydro
 }
@@ -453,8 +462,10 @@ profile<-L2.data %>%
          TotalNitrogen,NH3N,NO23,
          TotalPhosphorus,OPO4)
 
+if(params$save) {
 write_csv(profile,sprintf("%s/Tables/%s-%s-profile.csv",
                           params$year,params$year,params$lake))
+}
 
 profile.table<-profile %>%
   mutate(DisplayDate=sprintf("%s/%s/%s",month(Date),day(Date),year(Date)),
@@ -510,9 +521,11 @@ The blue points and line are average alkalinity values for `r LakeName`. Grey po
 ```{r Alkalinity plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
 alk.plot<-lake.plot.facet(L2.data,params$lake,params$year,y,wy=F,means=T,params.list="TotalAlk")
 
+if(params$save) {
 ggsave(alk.plot,
        file=sprintf("%s/Plots/%s-%s-alkalinity.png",params$year,params$year,params$lake),
        width=6,height=3)
+}
 
 alk.plot
 ```
@@ -525,9 +538,11 @@ The blue points and line are average UV absorbance values for `r LakeName`. Grey
 ```{r UV plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
 UV.plot<-lake.plot.facet(L2.data,params$lake,params$year,y,wy=F,means=T,params.list="UV254")
 
+if(params$save) {
 ggsave(UV.plot,
        file=sprintf("%s/Plots/%s-%s-UV.png",params$year,params$year,params$lake),
        width=6,height=3)
+}
 
 UV.plot
 ```
@@ -544,9 +559,10 @@ alltrends<-lake.trend.seasonal(data=filter(bind_rows(weekly.data,L2.data),
                             params.list="all",
                             overall.only=F)
 
-
+if(params$save) {
 write_csv(select(alltrends,-all),
           sprintf("%s/Tables/%s-%s-alltrends.csv",params$year,params$year,params$lake))
+}
 
 alltrends.table.data<-alltrends %>%
   left_join(y,by="Parameter") %>%
@@ -575,8 +591,10 @@ when.sampled<-bind_rows(weekly.data,L2.data) %>%
   summarize(n=n()) %>%
   spread(key=Month,value=n)
 
+if(params$save) {
 write_csv(when.sampled,
           sprintf("%s/Tables/%s-%s-whensampled.csv",params$year,params$year,params$lake))
+}
 
 
 alltrends.table

@@ -244,7 +244,7 @@ lake.plot.L2<-function(data.L1,data.L2,lake,year,y) {
   GpimageCrop("Tmp/tmp-means-rev.png","Tmp/tmp-secchi-means.png",1,hpix-hsec,wpix,hpix)
   GpimageCrop("Tmp/tmp-means.png","Tmp/tmp-means2.png",1,1,wpix,hpix-hsec)
   
-  GpimageTile(sprintf("%s/Plots/%s-%s-WQ.png",year,year,lake),
+  GpimageTile(sprintf("Tmp/Plots/%s-%s-WQ.png",year,lake),
               matrix(c("Tmp/tmp-means2.png","Tmp/tmp-indiv2.png","Tmp/tmp-secchi-means.png","Tmp/tmp-secchi.png"),ncol=2),
               rep.int(wpix,2),
               c(hpix-hsec,hsec)
@@ -312,7 +312,7 @@ lake.plot.L1<-function(data.L1,data.L2,lake,year,y) {
            
 
   # Then tile with L2
-  GpimageTile(sprintf("%s/Plots/%s-%s-WQ.png",year,year,lake),
+  GpimageTile(sprintf("Tmp/Plots/%s-%s-WQ.png",year,lake),
               matrix(c("Tmp/tmp-means-L2.png","Tmp/tmp-indiv-L2.png","Tmp/tmp-st-means.png","Tmp/tmp-st.png"),ncol=2),
               rep.int(wpix,2),
               c(hpix.L2,hpix.st)
