@@ -436,7 +436,7 @@ profile.dates<-L2.data %>%
   summarize(nDepths=1+length(unique(Depth)))
 
 
-
+if(nrow(profile.dates)>=1) {
 profile<-L2.data %>%
   filter(Lake==params$lake,
          Date %in% profile.dates$Date,
@@ -490,6 +490,8 @@ profile.table
 # 
 # profile.note<-paste(text_spec(profile.note.text,font_size=12))
 
+}
+
 ```
 
 ```{r Set up UV and alkalinity, message=FALSE, warning=FALSE, include=FALSE}
@@ -519,6 +521,8 @@ A lake’s ability to resist acidification, also called its buffering capacity, 
 The blue points and line are average alkalinity values for `r LakeName`. Grey points in the background are results for all other lakes in the Lake Stewardship program.
 
 ```{r Alkalinity plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
+if(!is.na(avg.alk)) {
+
 alk.plot<-lake.plot.facet(L2.data,params$lake,params$year,y,wy=F,means=T,params.list="TotalAlk")
 
 if(params$save) {
@@ -528,6 +532,7 @@ ggsave(alk.plot,
 }
 
 alk.plot
+}
 ```
 
 ## Water color
@@ -536,6 +541,8 @@ Water color affects a lake’s water clarity (and Secchi depth). Water color is 
 The blue points and line are average UV absorbance values for `r LakeName`. Grey points in the background are results for all other lakes in the Lake Stewardship program.
 
 ```{r UV plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
+if(!is.na(avg.UV)) {
+  
 UV.plot<-lake.plot.facet(L2.data,params$lake,params$year,y,wy=F,means=T,params.list="UV254")
 
 if(params$save) {
@@ -545,12 +552,13 @@ ggsave(UV.plot,
 }
 
 UV.plot
+}
 ```
 
 ## Trend analysis
 Below are the complete results of the seasonal-Kendall trend analysis, for all parameters at 1 m depth. In addition to the overall results, individual months' results are also shown. This can help illustrate what months are driving an overall trend.
 
-```{r Full trend analysis}
+```{r Full trend analysis, eval=FALSE, include=FALSE}
 
 alltrends<-lake.trend.seasonal(data=filter(bind_rows(weekly.data,L2.data),
                                            !Parameter %in% c("Microcystin","Anatoxin")),
