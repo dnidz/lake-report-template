@@ -5,7 +5,7 @@ output:
 params:
   lake: Wilderness
   year: 2017
-  save: TRUE
+  save: FALSE
 ---
 
 
@@ -558,7 +558,7 @@ UV.plot
 ## Trend analysis
 Below are the complete results of the seasonal-Kendall trend analysis, for all parameters at 1 m depth. In addition to the overall results, individual months' results are also shown. This can help illustrate what months are driving an overall trend.
 
-```{r Full trend analysis, eval=FALSE, include=FALSE}
+```{r Full trend analysis}
 
 alltrends<-lake.trend.seasonal(data=filter(bind_rows(weekly.data,L2.data),
                                            !Parameter %in% c("Microcystin","Anatoxin")),
