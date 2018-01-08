@@ -28,7 +28,7 @@ lakes<-tribble(~Lake,~Year,
 
 reports<-lakes %>%
   mutate(output_file=sprintf("%s-%s.html",Year,Lake),
-         params=map2(Lake,Year,~list(lake=.x,year=.y,save=FALSE))
+         params=map2(Lake,Year,~list(lake=.x,year=.y))
 )
 
 reports %>%

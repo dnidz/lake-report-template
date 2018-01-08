@@ -48,7 +48,7 @@ year<-2017
 reports<-tibble(
   Lake=lake.list,
   output_file=sprintf("%s-%s.html",year,Lake),
-  params=map(Lake,~list(lake=.,year=year,save=TRUE))
+  params=map(Lake,~list(lake=.,year=year))
 )
 
 reports %>%
