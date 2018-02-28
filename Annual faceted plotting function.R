@@ -208,15 +208,24 @@ lake.plot.facet<-function(data,lake,year,y,wy=F,means=F,params.list="L2",rev=F){
   p
 }
 
-
+## For the web -- repeat X-axis below every two plots ##
 # Plot a lake with either L1/L2 or just L2 data
-# wy.st = whether or not to plot secchi and temp on a water-year (vs. May-October) axis
-lake.plot<-function(data.L1,data.L2,wy.st,lake,year,y) {
+lake.plot.web<-function(data.L1,data.L2,is.L1,lake,year,y) {
   
+  # Is there L1 (weekly) Secchi and temp data, or only L2?
+  if(is.L1) {
+    data.st<-data.L1
+  } else {
+    data.st<-data.L2
+  }
+  
+  wy.st<-is.L1
+  
+    # Make ggplots
   L2.1<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=F,params.list=c("ChlorophyllA","TotalNitrogen"),rev=F)
   L2.2<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=F,params.list=c("TotalPhosphorus","NPRatio"),rev=F)
-  temp<-lake.plot.facet(data.L1,lake,year,y,wy=wy.st,means=F,params.list="ST",rev=F)
-  secchi<-lake.plot.facet(data.L1,lake,year,y,wy=wy.st,means=F,params.list="ST",rev=T)
+  temp<-lake.plot.facet(data.st,lake,year,y,wy=wy.st,means=F,params.list="ST",rev=F)
+  secchi<-lake.plot.facet(data.st,lake,year,y,wy=wy.st,means=F,params.list="ST",rev=T)
 
   m.L2.1<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=T,params.list=c("ChlorophyllA","TotalNitrogen"),rev=F)
   m.L2.2<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=T,params.list=c("TotalPhosphorus","NPRatio"),rev=F)
@@ -293,7 +302,7 @@ lake.plot<-function(data.L1,data.L2,wy.st,lake,year,y) {
   )
   # The x-axis is the same for secchi/temp and L2 for the means, but need to repeat it to make the plots line up side-by-side
   
-  GpimageTile(sprintf("%s/Plots/%s-%s-WQ.png",year,year,lake),
+  GpimageTile(sprintf("%s/Plots/%s-%s-WQ-web.png",year,year,lake),
               matrix(c("Tmp/tmp-combined.png","WQ title.png"),ncol=2),
               wpix*2,
               c(hpix.L2+hpix.st,100)
@@ -304,11 +313,91 @@ lake.plot<-function(data.L1,data.L2,wy.st,lake,year,y) {
 }
 
 
-## Deprecated ##
-# Plot a lake that has only L2 data this year
+## For print -- don't repeat x-axis (better alignment). ##
+# A lake with L1 data still needs separate water-year axis for secchi and temp.
+lake.plot.print.L1<-function(data.L1,data.L2,lake,year,y) {
+  
+  L2<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=F,params.list="noST",rev=F)
+  temp<-lake.plot.facet(data.L1,lake,year,y,wy=T,means=F,params.list="ST",rev=F)
+  secchi<-lake.plot.facet(data.L1,lake,year,y,wy=T,means=F,params.list="ST",rev=T)
+  
+  m.L2<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=T,params.list="noST",rev=F)
+  # For secchi and temp means, use both L1 and L2 data since many lakes have a
+  # longer L2 record than they do L1
+  m.temp<-bind_rows(data.L1,data.L2) %>%
+    lake.plot.facet(lake,year,y,wy=T,means=T,params.list="ST",rev=F)
+  m.secchi<-bind_rows(data.L1,data.L2) %>%
+    lake.plot.facet(lake,year,y,wy=T,means=T,params.list="ST",rev=T)
+  
+  # For tweaking, set width and height once
+  w<-6
+  h<-12
+  dpi<-200
+  h.L2<-h*4.2/6.2
+  h.st<-h*2.2/6.2
+  
+  ggsave(L2,filename="Tmp/tmp-indiv-L2.png",width=w,height=h.L2,dpi=dpi)
+  ggsave(secchi,filename="Tmp/tmp-indiv-secchi.png",width=w,height=h.st,dpi=dpi)
+  ggsave(temp,filename="Tmp/tmp-indiv-temp.png",width=w,height=h.st,dpi=dpi)
+  
+  ggsave(m.L2,filename="Tmp/tmp-means-L2.png",width=w,height=h.L2,dpi=dpi)
+  ggsave(m.secchi,filename="Tmp/tmp-means-secchi.png",width=w,height=h.st,dpi=dpi)
+  ggsave(m.temp,filename="Tmp/tmp-means-temp.png",width=w,height=h.st,dpi=dpi)
+  
+  
+  
+  # Cropping
+  wpix<-dpi*w
+  hpix.L2<-dpi*h.L2
+  hpix.st<-dpi*h.st
+  
+  # Set crop height for Secchi
+  hsec<-hpix.st/2.15
+  
+  # Crop and combine secchi and temp first
+  GpimageCrop("Tmp/tmp-indiv-secchi.png","Tmp/tmp-secchi.png",1,hpix.st-hsec,wpix,hpix.st)
+  GpimageCrop("Tmp/tmp-means-secchi.png","Tmp/tmp-secchi-means.png",1,hpix.st-hsec,wpix,hpix.st)
+  GpimageCrop("Tmp/tmp-indiv-temp.png","Tmp/tmp-temp.png",1,1,wpix,hpix.st-hsec)
+  GpimageCrop("Tmp/tmp-means-temp.png","Tmp/tmp-temp-means.png",1,1,wpix,hpix.st-hsec)
+  
+  GpimageTile("Tmp/tmp-st.png",
+              matrix(c("Tmp/tmp-temp.png","Tmp/tmp-secchi.png"),ncol=2),
+              wpix,
+              c(hpix.st-hsec,hsec)
+  )
+  GpimageTile("Tmp/tmp-st-means.png",
+              matrix(c("Tmp/tmp-temp-means.png","Tmp/tmp-secchi-means.png"),ncol=2),
+              wpix,
+              c(hpix.st-hsec,hsec)
+  )
+  
+
+  
+  # Then tile secchi/temp with L2
+  GpimageTile("Tmp/tmp-combined.png",
+              matrix(c("Tmp/tmp-means-L2.png","Tmp/tmp-indiv-L2.png","Tmp/tmp-st-means.png","Tmp/tmp-st.png"),ncol=2),
+              rep.int(wpix,2),
+              c(hpix.L2,hpix.st)
+  )
+  # The x-axis is the same for secchi/temp and L2 for the means, but need to repeat it to make the plots line up side-by-side
+  
+  GpimageTile(sprintf("%s/Plots/%s-%s-WQ-print.png",year,year,lake),
+              matrix(c("Tmp/tmp-combined.png","WQ title.png"),ncol=2),
+              wpix*2,
+              c(hpix.L2+hpix.st,100)
+  )
+  # When exporting "WQ title.png" from the SVG file, make sure to export "Page".
+  
+  
+}
+
+
+
+
+# A lake with only L2 data plots everything together.
 # Still pass L1 data to the means function since it may have 
 # L1 data for past years
-lake.plot.L2<-function(data.L1,data.L2,lake,year,y) {
+lake.plot.print.L2<-function(data.L1,data.L2,lake,year,y) {
   
   p<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=F,params.list="L2",rev=F)
   p.rev<-lake.plot.facet(data.L2,lake,year,y,wy=F,means=F,params.list="L2",rev=T)
@@ -346,7 +435,7 @@ lake.plot.L2<-function(data.L1,data.L2,lake,year,y) {
               c(hpix-hsec,hsec)
   )
   
-  GpimageTile(sprintf("%s/Plots/%s-%s-WQ.png",year,year,lake),
+  GpimageTile(sprintf("%s/Plots/%s-%s-WQ-print.png",year,year,lake),
               matrix(c("Tmp/tmp-combined.png","WQ title.png"),ncol=2),
               wpix*2,
               c(hpix,100)

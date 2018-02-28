@@ -322,14 +322,18 @@ Any statistically discernable trends are drawn with a dashed black line, and des
 # Note that means always include L1 and L2 data for consistency -- 
 # some lakes aren't L1 this year but were in the past.
 # Even though the means are May-October, the trends use both.
+# Generate print plots as well, for future use.
 
 if(is.weekly) { 
-  lake.plot(data.L1=weekly.data,data.L2=L2.data,wy.st=T,lake=params$lake,year=params$year,y=y)
+  lake.plot.web(data.L1=weekly.data,data.L2=L2.data,is.L1=T,lake=params$lake,year=params$year,y=y)
+  lake.plot.print.L1(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
+
 } else {
-  lake.plot(data.L1=weekly.data,data.L2=L2.data,wy.st=F,lake=params$lake,year=params$year,y=y)
+  lake.plot.web(data.L1=weekly.data,data.L2=L2.data,is.L1=F,lake=params$lake,year=params$year,y=y)
+  lake.plot.print.L2(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
 }
 
-include_graphics(sprintf("%s/Plots/%s-%s-WQ.png",params$year,params$year,params$lake))
+include_graphics(sprintf("%s/Plots/%s-%s-WQ-web.png",params$year,params$year,params$lake))
 ```
 
 `r if(!is.null(t$WQ)) t$WQ`
