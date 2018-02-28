@@ -65,9 +65,9 @@ TSI.plot<-function(data,lake,year) {
     geom_hline(aes(yintercept=40),color="grey",size=0.5)+
     geom_hline(aes(yintercept=50),color="grey",size=0.5)+
     geom_line()+geom_point(size=3)+
-    annotate("label",x=start,y=30,label=" oligotrophic",hjust=0,size=2,label.padding=unit(0.15,"lines"))+
-    annotate("label",x=start,y=45,label=" mesotrophic",hjust=0,size=2,label.padding=unit(0.15,"lines"))+
-    annotate("label",x=start,y=60,label=" eutrophic",hjust=0,size=2,label.padding=unit(0.15,"lines"))+
+    annotate("label",x=start,y=30,label=" oligotrophic",hjust=0,size=2.5,label.padding=unit(0.15,"lines"))+
+    annotate("label",x=start,y=45,label=" mesotrophic",hjust=0,size=2.5,label.padding=unit(0.15,"lines"))+
+    annotate("label",x=start,y=60,label=" eutrophic",hjust=0,size=2.5,label.padding=unit(0.15,"lines"))+
     scale_shape_manual(breaks=c("TSI.Sec","TSI.Chl","TSI.TP"),
                        values=c(23,19,22),
                        labels=c("Secchi","Chlorophyll-a","Total P")
@@ -126,7 +126,7 @@ TSI.map<-function(data,lake,year) {
     left_join(latlong,by="Lake")
   
   pal <- colorNumeric(
-    palette = "BuGn",
+    palette = "viridis",
     domain = c(20,70))
   
   # Interactive leaflet
@@ -155,6 +155,7 @@ TSI.map<-function(data,lake,year) {
 }
 
 TSI.map.static<-function(data,year) {
+  library(viridis)
   
   latlong<-read_csv("lakelatlong.csv",
                     col_types=cols(
@@ -185,7 +186,6 @@ TSI.map.static<-function(data,year) {
            TSI.Chl=10*(6-((2.04)-(0.68*log(ChlorophyllA)))/log(2)),
            TSI.TP=10*(6-(log(48/TotalPhosphorus)/0.693)) # TP in ug/L
     ) %>%
-    mutate(Focus=ifelse(Lake==lake,T,F)) %>%
     left_join(latlong,by="Lake")
 
   
@@ -207,9 +207,14 @@ TSI.map.static<-function(data,year) {
            maprange=T,
            base_layer=ggplot(data=d.TSI,aes(x=Longitude,y=Latitude,color=TSI.Chl)))+
     geom_point(size=4)+
+    
+    # geom_label_repel(aes(label=Lake,fill=TSI.Chl),color="white",size=4)+
+    # scale_color_gradient(low="cornflowerblue",high="darkgreen",name="Chlorophyll-a TSI")+
+    # scale_fill_gradient(low="cornflowerblue",high="darkgreen",name="Chlorophyll-a TSI")+
     geom_label_repel(aes(label=Lake,fill=TSI.Chl),color="white",size=4)+
-    scale_color_gradient(low="cornflowerblue",high="darkgreen",name="Chlorophyll-a TSI")+
-    scale_fill_gradient(low="cornflowerblue",high="darkgreen",name="Chlorophyll-a TSI")+
+    scale_color_viridis(begin=0.2,end=0.8,name="Chlorophyll-a TSI")+
+    scale_fill_viridis(begin=0.2,end=0.8,name="Chlorophyll-a TSI")+
+    
     theme(axis.text.x=element_blank(),
           axis.text.y=element_blank(),
           axis.ticks=element_blank(),
@@ -223,6 +228,7 @@ TSI.map.static<-function(data,year) {
           
     )
   
+  # Since no focus lake is highlighted, only need to make one map for a given year:
   ggsave(s,filename=sprintf("%s/Plots/%s-TSI map.png",year,year),width=5.25,height=8)
   
   
