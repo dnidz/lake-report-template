@@ -321,12 +321,12 @@ Any statistically discernable trends are drawn with a dashed black line, and des
 # Detect if L1 lake, and plot accordingly
 # Note that means always include L1 and L2 data for consistency -- 
 # some lakes aren't L1 this year but were in the past.
-# Even though the means are May-October, can cause differences with trends significance.
+# Even though the means are May-October, the trends use both.
 
 if(is.weekly) { 
-  lake.plot.L1(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
+  lake.plot(data.L1=weekly.data,data.L2=L2.data,wy.st=T,lake=params$lake,year=params$year,y=y)
 } else {
-  lake.plot.L2(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
+  lake.plot(data.L1=weekly.data,data.L2=L2.data,wy.st=F,lake=params$lake,year=params$year,y=y)
 }
 
 include_graphics(sprintf("%s/Plots/%s-%s-WQ.png",params$year,params$year,params$lake))
