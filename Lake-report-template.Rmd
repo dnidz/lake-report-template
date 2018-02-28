@@ -3,7 +3,7 @@ always_allow_html: yes
 output:
   html_document: default
 params:
-  lake: Wilderness
+  lake: Angle
   year: 2017
 ---
 
@@ -57,13 +57,21 @@ LakeName<-read_csv("lakelatlong.csv",
 ```
 
 
-```{r Read in text chunks, message=FALSE, warning=TRUE, include=FALSE}
+```{r Read in text chunks, message=FALSE, warning=FALSE, include=FALSE}
 # Set up a plain .txt file for each lake and year.
 # I'm using TOML structure, where each section has the name, equals sign, and 
 # the text is within sets of three *single* quotes:
 
-# Intro='''
-# Text goes here and can contain any characters and can be multiple paragraphs.
+# Overview='''
+# Text goes here and can contain any characters and can be multiple paragraphs. 
+#
+# Leave blank lines between paragraphs or they'll be joined into a single paragraph.
+#
+# You can use Markdown syntax for formatting, like *italics* or **bold**.
+#
+# Bulleted lists:
+# * Each item in the list
+# * Starts with an asterisk and a space. 
 #'''
 
 # The order of text chunks doesn't matter, but their names do (must capitalize!).
@@ -79,6 +87,7 @@ if(length(text.file)>0) {
     parseTOML()
   
   t<-map(text.input,str_replace_all,"\\\\n","\n\n") %>%
+    str_replace_all("Â","") %>% # parseTOML doesn't seem to read UTF-8 properly in Windows.
     str_trim() %>%
     as.list()
   names(t)<-names(text.input)
@@ -91,25 +100,26 @@ if(length(text.file)>0) {
 # keepCap - if using text elsewhere than the beginning of label, keep capitals or convert to lower?
 y<-tribble(
   ~Parameter, ~text, ~units, ~max, ~keepCap,
-  "Secchi", "Secchi depth","(m)",10,T,
-  "Temperature", "Water temperature","(°C)",30,F,
-  "ChlorophyllA", "Chlorophyll-a","(µg/L)",40,F,
-  "PheophytinA", "Pheophytin", "(µg/L)",40,F,
-  "TotalNitrogen", "Total nitrogen","(µg/L)",1250,F,
-  "NH3N", "Ammonia nitrogen","(µg/L)",1250,F,
-  "NO23", "Nitrate/nitrite nitrogen","(µg/L)",1250,F,
-  "TotalPhosphorus", "Total phosphorus","(µg/L)",100,F,
-  "OPO4","Orthophosphate phosphorus","(µg/L)",100,F,
+  "Secchi", "Secchi depth","m",10,T,
+  "Temperature", "Water temperature","°C",30,F,
+  "ChlorophyllA", "Chlorophyll-a","µg/L",40,F,
+  "PheophytinA", "Pheophytin", "µg/L",40,F,
+  "TotalNitrogen", "Total nitrogen","µg/L",1250,F,
+  "NH3N", "Ammonia nitrogen","µg/L",1250,F,
+  "NO23", "Nitrate/nitrite nitrogen","µg/L",1250,F,
+  "TotalPhosphorus", "Total phosphorus","µg/L",100,F,
+  "OPO4","Orthophosphate phosphorus","µg/L",100,F,
   "NPRatio", "N:P ratio","",100,T,
   "UV254", "UV254 absorbance","",1,T,
-  'TotalAlk', "Total alkalinity","(mg CaCO3)",25,F
+  'TotalAlk', "Total alkalinity","mg CaCO3",25,F
 ) %>%
   mutate(text=ordered(text,levels=str_c(text)),
-         label=str_trim(sprintf("%s %s",text,units)),
+         unitlabel=ifelse(units=="",units,sprintf("(%s)",units)),
+         label=str_trim(sprintf("%s %s",text,unitlabel)),
          label=ordered(label,levels=str_c(label)),
          meanslabel=str_trim(sprintf("Average %s %s",
                                      ifelse(keepCap,paste(text),str_to_lower(text)),
-                                     units)),
+                                     unitlabel)),
          meanslabel=ordered(meanslabel,levels=str_c(meanslabel))
   )
 
@@ -286,16 +296,27 @@ daily.lakes<-daily.data %>%
 is.daily<-params$lake %in% daily.lakes
 ```
 
-# Small Lake Report: `r LakeName` `r params$year`
+# `r LakeName`: `r params$year` Lake Stewardship Data
 
 `r if(!is.null(t$Description)) t$Description`
 
 `r if(!is.null(t$Overview)) t$Overview`
 
-## Water quality plots and annual means
+## Water quality plots and annual averages
+The plots below present results from water quality sampling in `r params$year`, as well as annual averages. 
+
+* **Secchi depth** is a measure of water clarity or transparency. Secchi depth is shallower when there are more suspended particles in the lake, such as sediment or algae. Secchi depth is also affected by water color, often from tannins or other naturally occurring organic molecules.
+* **Water temperature** can affect the growth rates of plants and algae. In addition, cooler or warmer water temperatures favor different species of fish and other aquatic organisms. 
+* **Chlorophyll-a** is a measure of the amount of algae in a lake. Chlorophyll-a is a pigment necessary for algae to photosynthesize and store energy.
+* **Phosphorus** and **nitrogen** are naturally occurring nutrients necessary for growth and reproduction in both plants and animals. Increases in nutrients (especially phosphorus) can lead to more frequent and dense algal blooms.
+* The **ratio of total nitrogen to total phosphorus (N:P)** indicates whether nutrient conditions favor the growth of cyanobacteria (blue-green algae). When N:P ratios are near or below 25, cyanobacteria can dominate the algal community. This is important because cyanobacteria can potentially produce toxins.
+
 Data for `r LakeName` are the blue points connected by the blue line. Any gaps in the blue line indicate missed samples. To provide some context for these values, the grey points in the background are results for all other lakes in the Lake Stewardship program.
 
-All average values are May-October averages. `r if(is.weekly) paste("Although Secchi depth and water temperature are currently measured year-round, some years in the dataset have only summer and fall measurements. Graphing May-October averages makes it possible to compare data across all years, as well as to compare with other lakes that have only summer and fall measurements. ")`Any statistically discernable trends are drawn with a dashed black line, and described further in the next section.
+`r if(is.weekly) paste("Secchi depth and water temperature are currently measured year-round. Individual samples for Secchi and temperature are presented for the water year (October 1st through September 30th). Annual averages for all parameters, including Secchi and temperature, are for May-October data only. This makes it possible to compare averages across all years (some years did not have year-round Secchi and temperature measurements) and with other lakes. ")`
+`r if(!is.weekly) paste("Annual averages are for May-October data. ")`
+Any statistically discernable trends are drawn with a dashed black line, and described further in the next section.
+
 ```{r Water quality plots, message=FALSE, warning=FALSE}
 # Detect if L1 lake, and plot accordingly
 # Note that means always include L1 and L2 data for consistency -- 
@@ -331,24 +352,26 @@ table.trends<-trends.sig %>%
   left_join(y,by="Parameter") %>%
   arrange(label) %>%
   mutate(DecadalChange=signif(slope*10,2),
-         p=scientific(p,2)
-         ) %>%
-  select(label,DecadalChange,p) %>%
-  kable(col.names=c("Parameter","Change per Decade","p-value")
+         p=scientific(p,2),
+         ChangeText=sprintf("%s %s",DecadalChange,units)
+  ) %>%
+  select(text,ChangeText) %>%
+  kable(col.names=c("Parameter","Change per Decade"),
+        align="lr"
   ) %>%
   kable_styling(full_width=F)
 
 ```
 To understand how `r LakeName` has been changing over time, we tested water-quality parameters for trends using a seasonal Kendall test. 
 `r if(!has.trends) paste(LakeName,"does not have any statistically discernable trends (p<0.05) over time.")`
-`r if(has.trends) paste("Below are the statistically discernable trends (p<0.05). Results are presented as an average rate of change per decade.")`
+`r if(has.trends) paste("Below are the statistically discernable trends (p<0.05). Results are presented as an average amount of change per decade.")`
 
 `r if(has.trends) table.trends`
 
 `r if(!is.null(t$Trends)) t$Trends`
 
 ## Trophic State Indices
-The Trophic State Index (TSI) is a common index of a lake's biological productivity. TSI values are calculated from Secchi depth, chlorophyll-a concentrations, and total phosphorus concentrations. These three TSI estimates are all scaled between 0 and 100.
+The Trophic State Index (TSI) is a common index of a lake's overall biological productivity. TSI values are calculated from Secchi depth, chlorophyll-a concentrations, and total phosphorus concentrations. These three TSI estimates are all scaled between 0 and 100.
 
 *Oligotrophic* lakes (TSI <40) are very clear, with low nutrient concentrations and low algal growth. These are often mountain lakes, or lakes in undisturbed forests. *Eutrophic* lakes (TSI >50) have cloudy water, with high nutrient concentrations and high algal growth. These are often highly altered lakes, and may have frequent algal blooms. *Mesotrophic* lakes (TSI 40-50) are in the middle, with fairly clear water, and moderate nutrient concentrations and algal growth. Mesotrophic lakes are common in lowland western Washington, especially in areas with some development along the shoreline and in the watershed. 
 
@@ -365,7 +388,7 @@ TSI
 `r if(!is.null(t$TSI)) t$TSI`
 
 ## Lake trophic states
-These are the lakes in the King County Lake Stewardship program in `r params$year`. The color of each circle indicates the lake's average chlorophyll-a TSI value for the year.
+For a comparison with other lakes, this map shows the trophic state for each lake in the King County Lake Stewardship program in `r params$year`. The color of each circle indicates the lake's average chlorophyll-a TSI value for the year.
 ```{r TSI map, fig.height=10, fig.width=8, message=FALSE, warning=FALSE}
 TSI.map(data=L2.data,lake=params$lake,year=params$year)
 ```
@@ -373,18 +396,20 @@ TSI.map(data=L2.data,lake=params$lake,year=params$year)
 
 # Appendix
 ## Data summary
-This table summarizes data from `r params$year`, giving the minimum, mean (average), and maximum values for each parameter. `r if(is.weekly) paste("This includes annual summary statistics for Secchi and temperature, which were measured year-round as part of Level I monitoring, and May-October summary statistics for all parameters. ")`To reduce biases from missing data or changes in sampling frequency, monthly means were calculated and then averaged to give an overall mean.
+This table summarizes data from `r params$year`, giving the minimum, mean (average), and maximum values for each parameter. `r if(is.weekly) paste("This includes water-year (Oct-Sept) summary statistics for Secchi and temperature, which were measured year-round as part of Level I monitoring, and May-October summary statistics for all parameters. ")`To reduce biases from missing data or changes in sampling frequency, monthly means were calculated and then averaged to give an overall mean.
 
 ```{r Data summary, message=FALSE, warning=FALSE}
 if(is.weekly) {
-  summary.L1<-lake.data.summary(weekly.data,params$lake,params$year,y,wy=T,params.list="ST")
-  summary.L2<-lake.data.summary(L2.data,params$lake,params$year,y,wy=F,params.list="L2")
+  combo.data<-bind_rows(weekly.data,L2.data)
+  
+  summary.L1<-lake.data.summary(combo.data,params$lake,params$year,y,wy=T,params.list="ST")
+  summary.L2<-lake.data.summary(combo.data,params$lake,params$year,y,wy=F,params.list="L2")
   
   summary.table<-bind_rows(summary.L1,summary.L2) %>%
     kable(col.names=c("Parameter","Minimum","Mean","Maximum")
     ) %>%
     kable_styling(full_width=F) %>%
-    group_rows(index=c("Annual statistics"=nrow(summary.L1),
+    group_rows(index=c("Water-year statistics"=nrow(summary.L1),
                        "May-October statistics"=nrow(summary.L2)
     ))
   
@@ -408,6 +433,8 @@ summary.table
 ```
 
 ## `r if(is.daily) paste("Hydrology: Lake level and precipitation")`
+`r if(is.daily)   paste("Lake level and precipitation were recorded year-round. Bars show total weekly  precipitation, and the line shows average weekly lake level.")`
+
 ```{r Level & precip plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
 if(is.daily) { 
   hydro<-hydro.plot(data=daily.data,lake=params$lake,year=params$year)
@@ -469,10 +496,10 @@ profile.table<-profile %>%
   kable(col.names=c("Date","Depth","Temp","Chlor","Pheo","TN","NH~3~","NO~2/3~","TP","OPO~4~"),
         align=c("l","r","r","r","r","r","r","r","r","r")
   ) %>%
-  kable_styling(full_width=F) %>%
+  kable_styling(full_width=F,bootstrap_options=c("condensed","responsive")) %>%
   column_spec(1,bold=T) %>%
   add_footnote(notation="symbol",
-               "Parameter abbreviations are: chlorophyll-a (Chlor), pheophytin (Pheo), total nitrogen (TN), nitrate/nitrite, ammonia (NH3), total phosphorus (TP), orthophosphate (OPO4). Depth is in m, temperature is in °C, and all other parameters are in µg/L. Dashes indicate parameters that were not analyzed for a given sample. Values below the method detection limit (MDL) are enclosed in parentheses and have the value of the MDL substituted."
+               "Parameter abbreviations are: chlorophyll-a (Chlor), pheophytin (Pheo), total nitrogen (TN), ammonia (NH3), nitrate/nitrite (NO2/3), total phosphorus (TP), orthophosphate (OPO4). Depth is in m, temperature is in °C, and all other parameters are in µg/L. Dashes indicate parameters that were not analyzed for a given sample. Values below the method detection limit (MDL) are enclosed in parentheses and have the value of the MDL substituted."
                )
 
 
@@ -505,13 +532,29 @@ avg.UV<-L2.data %>%
   mean(na.rm=T) %>%
   round(digits=2)
 
+alk.trend<-lake.trend.seasonal(data=L2.data,
+                                   lake=params$lake,
+                                   year=params$year,
+                                   params.list="TotalAlk",
+                                   overall.only=T)
+
+has.alk.trend<-alk.trend$p<0.05 & alk.trend$slope!=0
+
+UV.trend<-lake.trend.seasonal(data=L2.data,
+                                   lake=params$lake,
+                                   year=params$year,
+                                   params.list="UV254",
+                                   overall.only=T)
+
+has.UV.trend<-UV.trend$p<0.05 & UV.trend$slope!=0
 ```
 
 
 ## Total alkalinity
 A lake’s ability to resist acidification, also called its buffering capacity, is measured as “total alkalinity.” Lakes with total alkalinity less than 20 mg CaCO~3~ are considered sensitive to acidification. We measured total alkalinity in May and August (on profile-sampling days). In `r params$year`, the average total alkalinity was `r avg.alk` mg CaCO~3~. `r if(!is.null(t$Alkalinity)) t$Alkalinity`
 
-The blue points and line are average alkalinity values for `r LakeName`. Grey points in the background are results for all other lakes in the Lake Stewardship program.
+The blue points and line are annual average alkalinity values for `r LakeName`. Grey points in the background are results for all other lakes in the Lake Stewardship program. 
+`r if(has.alk.trend) paste("The dashed black line shows the statistically discernable trend (p<0.05) in alkalinity.")`
 
 ```{r Alkalinity plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
 if(!is.na(avg.alk)) {
@@ -529,7 +572,8 @@ alk.plot
 ## Water color
 Water color affects a lake’s water clarity (and Secchi depth). Water color is measured by shining a specific wavelength of ultraviolet light (254 nm) through a filtered water sample and measuring the percent that was absorbed. We measured UV254 absorbance in May and August (on profile-sampling days). In `r params$year`, the average UV254 absorbance was `r avg.UV`, on a scale where 0 is no absorbance (perfectly clear) and 1 is complete absorbance (perfectly opaque). `r if(!is.null(t$UV)) t$UV`
 
-The blue points and line are average UV absorbance values for `r LakeName`. Grey points in the background are results for all other lakes in the Lake Stewardship program.
+The blue points and line are annual average UV absorbance values for `r LakeName`. Grey points in the background are results for all other lakes in the Lake Stewardship program. 
+`r if(has.UV.trend) paste("The dashed black line shows the statistically discernable trend (p<0.05) in UV absorbance.")`
 
 ```{r UV plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
 if(!is.na(avg.UV)) {
@@ -545,7 +589,7 @@ UV.plot
 ```
 
 ## Trend analysis
-Below are the complete results of the seasonal-Kendall trend analysis, for all parameters at 1 m depth. In addition to the overall results, individual months' results are also shown. This can help illustrate what months are driving an overall trend.
+Below are the complete results of the seasonal-Kendall trend analysis, for all parameters at 1 m depth. In addition to the overall results, individual months' results are also shown. This can help illustrate what months are driving an overall trend. For readability, very small p-values are noted as "<0.0001".
 
 ```{r Full trend analysis}
 
@@ -562,18 +606,22 @@ write_csv(select(alltrends,-all),
 alltrends.table.data<-alltrends %>%
   left_join(y,by="Parameter") %>%
   mutate(sig=ifelse(p<0.05 & slope!=0,T,F),
-         DecadalChange=round(slope*10,2),
-         p=scientific(p,2) # This converts p to a character -- do p<0.05 before
+         DecadalChange=prettyNum(round(slope*10,2),format="f",digits=2,nsmall=2,drop0trailing=F), # exactly 2 digits after decimal point
+         # p=scientific(p,2), # This converts p to a character -- test for p<0.05 before
+         # p=prettyNum(p,format="g",digits=2,scientific=-1),
+         p=ifelse(p<0.0001,"<0.0001",signif(p,1)),
+         ChangeText=sprintf("%s %s",DecadalChange,units)
   ) %>%
-  mutate(tablelabel=ifelse(Month=="Overall",as.character(label),NA)) %>%
+  mutate(tablelabel=ifelse(Month=="Overall",as.character(text),NA)) %>%
   arrange(label)
   
 alltrends.table<-alltrends.table.data %>%
-  select(tablelabel,Month,DecadalChange,p) %>%
+  select(tablelabel,Month,ChangeText,p) %>%
   kable(col.names=c("Parameter","Month","Change per Decade","p-value"),
-        escape=F
+        escape=F,
+        align="llrc"
   ) %>%
-  kable_styling(full_width=F) %>%
+  kable_styling(full_width=F,bootstrap_options=c("condensed","responsive")) %>%
   row_spec(which(alltrends.table.data$sig),bold=T)
 
 when.sampled<-bind_rows(weekly.data,L2.data) %>%
