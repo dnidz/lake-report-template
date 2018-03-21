@@ -1,10 +1,11 @@
 ---
 always_allow_html: yes
 output:
-  html_document: default
+  word_document: default
 params:
   lake: Angle
   year: 2017
+  format: word
 ---
 
 
@@ -29,8 +30,17 @@ library(RcppTOML)
 library(NADA)
 library(EnvStats)
 library(rkt)
-options(knitr.table.format="html",knitr.kable.NA = '')
+options(knitr.kable.NA = '')
 options(scipen=999)
+Sys.setenv("PATH"=sprintf("%s;C:\\Users\\danidzgorski\\AppData\\Local\\Programs\\MiKTeX 2.9\\miktex\\bin\\x64\\",Sys.getenv("PATH")))
+
+if(params$format=="HTML") {
+  options(knitr.table.format="html")
+} else {
+  options(knitr.table.format="latex")
+}
+
+
 source("Multiplot function.R")
 source("Annual faceted plotting function.R")
 source("Hydrology plotting function.R")
@@ -162,8 +172,8 @@ L2.data<-L2.input %>%
   filter(!str_detect(Parameter,"TSI"), # remove individual TSI values
          !str_detect(Parameter,"Q")) %>% # remove quals
   mutate(Value=as.numeric(Value)) %>%
-  filter(!(Parameter=="TotalPhosphorus" & Date<as.Date("1998-01-01")))
-# remove TP before 1998 -- methods change
+  filter(!(Parameter %in% c("TotalPhosphorus","NPRatio") & Date<as.Date("1998-01-01")))
+# remove TP and N:P before 1998 -- methods change
 
 # Dataframe of L2 qualifiers -- used for profile data
 L2.quals<-L2.input %>%
@@ -324,16 +334,24 @@ Any statistically discernable trends are drawn with a dashed black line, and des
 # Even though the means are May-October, the trends use both.
 # Generate print plots as well, for future use.
 
-if(is.weekly) { 
-  lake.plot.web(data.L1=weekly.data,data.L2=L2.data,is.L1=T,lake=params$lake,year=params$year,y=y)
-  lake.plot.print.L1(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
-
+if(params$format=="HTML") {
+  if(is.weekly) { 
+    lake.plot.web(data.L1=weekly.data,data.L2=L2.data,is.L1=T,lake=params$lake,year=params$year,y=y)
+  } else {
+    lake.plot.web(data.L1=weekly.data,data.L2=L2.data,is.L1=F,lake=params$lake,year=params$year,y=y)
+  }
+  
+  include_graphics(sprintf("%s/Plots/%s-%s-WQ-web.png",params$year,params$year,params$lake))
+  
 } else {
-  lake.plot.web(data.L1=weekly.data,data.L2=L2.data,is.L1=F,lake=params$lake,year=params$year,y=y)
-  lake.plot.print.L2(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
+  if(is.weekly) { 
+    lake.plot.print.L1(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
+  } else {
+    lake.plot.print.L2(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
+  }
+  
+  include_graphics(sprintf("%s/Plots/%s-%s-WQ-print.png",params$year,params$year,params$lake))
 }
-
-include_graphics(sprintf("%s/Plots/%s-%s-WQ-web.png",params$year,params$year,params$lake))
 ```
 
 `r if(!is.null(t$WQ)) t$WQ`
@@ -360,17 +378,23 @@ table.trends<-trends.sig %>%
          ChangeText=sprintf("%s %s",DecadalChange,units)
   ) %>%
   select(text,ChangeText) %>%
-  kable(col.names=c("Parameter","Change per Decade"),
+  kable(booktabs=T,
+        col.names=c("Parameter","Change per Decade"),
         align="lr"
   ) %>%
   kable_styling(full_width=F)
+
+if(params$format=="word") trendtable<-kable_as_image(table.trends,filename=sprintf("%s/Tables/%s-%s-trends",params$year,params$year,params$lake),
+                           file_format="jpeg")
 
 ```
 To understand how `r LakeName` has been changing over time, we tested water-quality parameters for trends using a seasonal Kendall test. 
 `r if(!has.trends) paste(LakeName,"does not have any statistically discernable trends (p<0.05) over time.")`
 `r if(has.trends) paste("Below are the statistically discernable trends (p<0.05). Results are presented as an average amount of change per decade.")`
 
-`r if(has.trends) table.trends`
+`r if(has.trends & params$format!="word") table.trends`
+`r if(has.trends & params$format=="word") trendtable`
+
 
 `r if(!is.null(t$Trends)) t$Trends`
 
@@ -391,16 +415,23 @@ TSI
 
 `r if(!is.null(t$TSI)) t$TSI`
 
-## Lake trophic states
+## Lake trophic state comparison
 For a comparison with other lakes, this map shows the trophic state for each lake in the King County Lake Stewardship program in `r params$year`. The color of each circle indicates the lake's average chlorophyll-a TSI value for the year.
-```{r TSI map, fig.height=10, fig.width=8, message=FALSE, warning=FALSE}
-TSI.map(data=L2.data,lake=params$lake,year=params$year)
+```{r TSI map, fig.height=6, fig.width=4, message=FALSE, warning=FALSE}
+if(params$format=="HTML") {
+  TSI.map(data=L2.data,lake=params$lake,year=params$year)
+} else {
+  # There's some randomness in the ggrepel of the map labels,
+  # so make the TSI map separately and check the positioning.
+  include_graphics(sprintf("%s/Plots/%s-TSI map.png",params$year,params$year))
+}
 ```
 
-
+******
 # Appendix
+
 ## Data summary
-This table summarizes data from `r params$year`, giving the minimum, mean (average), and maximum values for each parameter. `r if(is.weekly) paste("This includes water-year (Oct-Sept) summary statistics for Secchi and temperature, which were measured year-round as part of Level I monitoring, and May-October summary statistics for all parameters. ")`To reduce biases from missing data or changes in sampling frequency, monthly means were calculated and then averaged to give an overall mean.
+This table summarizes data from `r params$year` (1 m depth only), giving the minimum, mean (average), and maximum values for each parameter. `r if(is.weekly) paste("This includes water-year (Oct-Sept) summary statistics for Secchi and temperature, which were measured year-round as part of Level I monitoring, and May-October summary statistics for all parameters. ")`To reduce biases from missing data or changes in sampling frequency, monthly means were calculated and then averaged to give an overall mean.
 
 ```{r Data summary, message=FALSE, warning=FALSE}
 if(is.weekly) {
@@ -410,7 +441,8 @@ if(is.weekly) {
   summary.L2<-lake.data.summary(combo.data,params$lake,params$year,y,wy=F,params.list="L2")
   
   summary.table<-bind_rows(summary.L1,summary.L2) %>%
-    kable(col.names=c("Parameter","Minimum","Mean","Maximum")
+    kable(booktabs=T,
+          col.names=c("Parameter","Minimum","Mean","Maximum")
     ) %>%
     kable_styling(full_width=F) %>%
     group_rows(index=c("Water-year statistics"=nrow(summary.L1),
@@ -425,7 +457,8 @@ if(is.weekly) {
   summary.L2<-lake.data.summary(L2.data,params$lake,params$year,y,wy=F,params.list="L2")
   
   summary.table<-summary.L2 %>%
-    kable(col.names=c("Parameter","Minimum","Mean","Maximum")
+    kable(booktabs=T,
+          col.names=c("Parameter","Minimum","Mean","Maximum")
     ) %>%
     kable_styling(full_width=F)
   
@@ -433,7 +466,11 @@ if(is.weekly) {
                                  params$year,params$year,params$lake))
   }
 
-summary.table
+if(params$format!="word") {
+  summary.table
+} else {
+  kable_as_image(summary.table,filename=sprintf("%s/Tables/%s-%s-summary",params$year,params$year,params$lake),file_format="jpeg")
+}
 ```
 
 ## `r if(is.daily) paste("Hydrology: Lake level and precipitation")`
@@ -497,18 +534,39 @@ profile.table<-profile %>%
   )%>%
   select(DisplayDate,everything()) %>%
   select(-Date) %>%
-  kable(col.names=c("Date","Depth","Temp","Chlor","Pheo","TN","NH~3~","NO~2/3~","TP","OPO~4~"),
+  kable(booktabs=T,
+        col.names=c("Date","Depth","Temp","Chlor","Pheo","TN","NH~3~","NO~2/3~","TP","OPO~4~"),
         align=c("l","r","r","r","r","r","r","r","r","r")
   ) %>%
-  kable_styling(full_width=F,bootstrap_options=c("condensed","responsive")) %>%
-  column_spec(1,bold=T) %>%
+  column_spec(1,bold=T) %>% 
   add_footnote(notation="symbol",
-               "Parameter abbreviations are: chlorophyll-a (Chlor), pheophytin (Pheo), total nitrogen (TN), ammonia (NH3), nitrate/nitrite (NO2/3), total phosphorus (TP), orthophosphate (OPO4). Depth is in m, temperature is in °C, and all other parameters are in µg/L. Dashes indicate parameters that were not analyzed for a given sample. Values below the method detection limit (MDL) are enclosed in parentheses and have the value of the MDL substituted."
-               )
+  "Parameter abbreviations are: chlorophyll-a (Chlor), pheophytin (Pheo), total nitrogen (TN), ammonia (NH3), nitrate/nitrite (NO2/3), total phosphorus (TP), orthophosphate (OPO4). Depth is in m, temperature is in °C, and all other parameters are in µg/L. Dashes indicate parameters that were not analyzed for a given sample. Values below the method detection limit (MDL) are enclosed in parentheses and have the value of the MDL substituted."
+  )
 
+if(params$format=="HTML") {
+  profile.table %>%
+  kable_styling(full_width=F,bootstrap_options=c("condensed","responsive"))
+} else if(params$format=="word") {
+profile %>%
+  mutate(DisplayDate=sprintf("%s/%s/%s",month(Date),day(Date),year(Date)),
+         DisplayDate=ifelse(Depth==1,DisplayDate,"")
+  )%>%
+  select(DisplayDate,everything()) %>%
+  select(-Date) %>%
+  kable(booktabs=T,
+        col.names=c("Date","Depth","Temp","Chlor","Pheo","TN","NH3","NO2/3","TP","OPO4"),
+        align=c("l","r","r","r","r","r","r","r","r","r")
+  ) %>%
+  column_spec(1,bold=T) %>% 
+  add_footnote(notation="symbol",
+  "Parameter abbreviations are: chlorophyll-a (Chlor), pheophytin (Pheo), total nitrogen (TN), ammonia (NH3), nitrate/nitrite (NO2/3), total phosphorus (TP), orthophosphate (OPO4). Depth is in m, temperature is in °C, and all other parameters are in µg/L. Dashes indicate parameters that were not analyzed for a given sample. Values below the method detection limit (MDL) are enclosed in parentheses and have the value of the MDL substituted."
+  ) %>%
+    kable_styling(latex_options="scale_down") %>%
+    kable_as_image(filename=sprintf("%s/Tables/%s-%s-profile",params$year,params$year,params$lake),file_format="jpeg")
+} else {
+  profile.table
+}
 
-
-profile.table
 
 # profile.note.text<-"Parameter abbreviations are: chlorophyll-a (Chlor), pheophytin (Pheo), total nitrogen (TN), nitrate/nitrite, ammonia (NH3), total phosphorus (TP), orthophosphate (OPO4). Dashes indicate parameters that were not analyzed for a given sample. Values below the method detection limit (MDL) are enclosed in parentheses and have the value of the MDL substituted."
 # 
@@ -558,7 +616,7 @@ has.UV.trend<-UV.trend$p<0.05 & UV.trend$slope!=0
 A lake’s ability to resist acidification, also called its buffering capacity, is measured as “total alkalinity.” Lakes with total alkalinity less than 20 mg CaCO~3~ are considered sensitive to acidification. We measured total alkalinity in May and August (on profile-sampling days). In `r params$year`, the average total alkalinity was `r avg.alk` mg CaCO~3~. `r if(!is.null(t$Alkalinity)) t$Alkalinity`
 
 The blue points and line are annual average alkalinity values for `r LakeName`. Grey points in the background are results for all other lakes in the Lake Stewardship program. 
-`r if(has.alk.trend) paste("The dashed black line shows the statistically discernable trend (p<0.05) in alkalinity.")`
+`r if(has.alk.trend) sprintf("The dashed black line shows the long-term trend in alkalinity, with an average change of %s mg CaCO~3~ per decade.",round(alk.trend$slope*10,2))`
 
 ```{r Alkalinity plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
 if(!is.na(avg.alk)) {
@@ -577,7 +635,7 @@ alk.plot
 Water color affects a lake’s water clarity (and Secchi depth). Water color is measured by shining a specific wavelength of ultraviolet light (254 nm) through a filtered water sample and measuring the percent that was absorbed. We measured UV254 absorbance in May and August (on profile-sampling days). In `r params$year`, the average UV254 absorbance was `r avg.UV`, on a scale where 0 is no absorbance (perfectly clear) and 1 is complete absorbance (perfectly opaque). `r if(!is.null(t$UV)) t$UV`
 
 The blue points and line are annual average UV absorbance values for `r LakeName`. Grey points in the background are results for all other lakes in the Lake Stewardship program. 
-`r if(has.UV.trend) paste("The dashed black line shows the statistically discernable trend (p<0.05) in UV absorbance.")`
+`r if(has.UV.trend) sprintf("The dashed black line shows the long-term trend in UV absorbance, with an average change of %s absorbance units per decade.",round(UV.trend$slope*10,2))`
 
 ```{r UV plot, fig.height=3, fig.width=6, message=FALSE, warning=FALSE}
 if(!is.na(avg.UV)) {
@@ -621,11 +679,11 @@ alltrends.table.data<-alltrends %>%
   
 alltrends.table<-alltrends.table.data %>%
   select(tablelabel,Month,ChangeText,p) %>%
-  kable(col.names=c("Parameter","Month","Change per Decade","p-value"),
+  kable(longtable=T,booktabs=T,
+        col.names=c("Parameter","Month","Change per Decade","p-value"),
         escape=F,
         align="llrc"
   ) %>%
-  kable_styling(full_width=F,bootstrap_options=c("condensed","responsive")) %>%
   row_spec(which(alltrends.table.data$sig),bold=T)
 
 when.sampled<-bind_rows(weekly.data,L2.data) %>%
@@ -641,7 +699,23 @@ when.sampled<-bind_rows(weekly.data,L2.data) %>%
 write_csv(when.sampled,
           sprintf("%s/Tables/%s-%s-whensampled.csv",params$year,params$year,params$lake))
 
-alltrends.table
+if(params$format=="HTML") {
+  alltrends.table %>%
+  kable_styling(full_width=F,bootstrap_options=c("condensed","responsive"))
+} else if(params$format=="word"){
+  word.table<-alltrends.table.data %>%
+    mutate(p=ifelse(sig,sprintf("**%s**",p),p)) %>%
+    select(tablelabel,Month,ChangeText,p) %>%
+    kable(col.names=c("**Parameter**","**Month**","**Change per Decade**","**p-value**"),
+          escape=F,
+          align="llrc",
+          format="markdown"
+    )
+  word.table
+} else {
+  alltrends.table
+}
 
+  
 ```
 
