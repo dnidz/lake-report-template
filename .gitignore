@@ -9,3 +9,6 @@ Thumbs.db
 *.png
 *.pdf
 *.html
+*.docx
+*.svg
+pdftest.*
