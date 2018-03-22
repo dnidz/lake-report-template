@@ -206,12 +206,12 @@ TSI.map.static<-function(data,year) {
   s<-ggmap(maptile,
            maprange=T,
            base_layer=ggplot(data=d.TSI,aes(x=Longitude,y=Latitude,color=TSI.Chl)))+
-    geom_point(size=4)+
+    geom_point(size=3)+
     
     # geom_label_repel(aes(label=Lake,fill=TSI.Chl),color="white",size=4)+
     # scale_color_gradient(low="cornflowerblue",high="darkgreen",name="Chlorophyll-a TSI")+
     # scale_fill_gradient(low="cornflowerblue",high="darkgreen",name="Chlorophyll-a TSI")+
-    geom_label_repel(aes(label=Lake,fill=TSI.Chl),color="white",size=4)+
+    geom_label_repel(aes(label=Lake,fill=TSI.Chl),color="white",size=3)+
     scale_color_viridis(begin=0.2,end=0.8,name="Chlorophyll-a TSI")+
     scale_fill_viridis(begin=0.2,end=0.8,name="Chlorophyll-a TSI")+
     
@@ -224,12 +224,14 @@ TSI.map.static<-function(data,year) {
           legend.direction="horizontal",
           legend.position=c(1,0),
           legend.box.margin=margin(t = 0, r = 0, b = 0, l = 0, unit = "pt"),
-          legend.margin=margin(t = 0, r = 0, b = 0, l = 0, unit = "pt")
-          
+          legend.margin=margin(t = 0, r = 0, b = 0, l = 0, unit = "pt"),
+          legend.key.size=unit(0.2,"inches"),
+          legend.text=element_text(size=7),
+          legend.title=element_text(size=8)
     )
   
   # Since no focus lake is highlighted, only need to make one map for a given year:
-  ggsave(s,filename=sprintf("%s/Plots/%s-TSI map.png",year,year),width=5.25,height=8)
+  ggsave(s,filename=sprintf("%s/Plots/%s-TSI map.png",year,year),width=4,height=6)
   
-  
+  s
 }
