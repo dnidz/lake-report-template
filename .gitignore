@@ -11,4 +11,6 @@ Thumbs.db
 *.html
 *.docx
 *.svg
+*.jpeg
+*.jpg
 pdftest.*

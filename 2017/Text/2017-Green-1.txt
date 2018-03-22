@@ -1,0 +1,24 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Sally and Ted Abella, Jeff Hugenor, and Richard Fleming, the volunteer monitors for Green Lake.*
+
+The key takeaways from the 2017 monitoring season are:
+* Green Lake continues to be mesotrophic, with moderate nutrient concentrations and algal growth.
+* Chlorophyll concentrations remained fairly low in 2017, following the alum treatment in spring 2016. 
+* Algal blooms were reported in September and October 2017. Toxin analyses found microcystin concentrations below the Washington State Recreational Guidelines, though the October 24th sample was only slightly below the guideline value.
+
+The Lake Stewardship Program recommends:
+* Increase awareness and education about toxic algae blooms in Green Lake. Algae blooms should be reported to the King County Lake Stewardship Program and, if necessary, samples should be submitted for algal toxin analysis through the NW Toxic Algae Program.
+* Continue monitoring Green Lake through the Lake Stewardship Program. 
+'''
+WQ='''
+Green Lake received alum treatments in 2004 and 2016, which reduced phosphorus availability and algal growth. For temperature averages, note that the trend line (black dashed line) was estimated using year-round data, while the blue points are May-October averages and are higher than the year-round trend.
+'''
+Trends='''
+Chlorophyll, nitrogen, and phosphorus all increased over time, which is expected since monitoring started in 2005 after an alum treatment in 2004. Green Lake spring and summer water temperatures have also increased.
+'''
+TSI='''
+In 2017, all three TSI values were in the mesotrophic range.
+'''

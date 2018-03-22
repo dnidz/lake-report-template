@@ -1,0 +1,25 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Kenneth Docktor, the volunteer monitor for Lake Sawyer.*
+
+The key takeaways from the 2017 monitoring season are:
+* Lake Sawyer continues to be mesotrophic, with relatively clear water, moderate nutrient concentrations, and moderate algal growth.
+* Chlorophyll concentrations had been higher than average in 2015, but declined through 2016 and 2017.
+* Algal blooms were reported in June 2017. Toxin analyses found very low concentrations of algal toxins, well below the Washington State Recreational Guidelines. 
+* N:P ratios were below 25 for much of the monitoring season, indicating the potential for cyanobacteria (which have the ability to produce toxins) to dominate the algal community.
+
+The Lake Stewardship program recommends:
+* Increase awarenes and education about toxic algal blooms in Lake Sawyer. Algal blooms should be reported to the King County Lake Stewardship Program and, if necessary, samples should be submitted for algal toxin analysis as part of the NW Toxic Algae Program.
+* Continue monitoring Lake Sawyer through the Lake Stewardship Program. 
+'''
+WQ='''
+Nitrogen-to-phosphorus (N:P) ratios were below 25 for much of the monitoring season. This indicates the potential for cyanobacteria (which have the ability to produce toxins) to dominate the algal community.
+'''
+Trends='''
+In 2017, the three TSI values were in the mesotrophic range.
+'''
+TSI='''
+
+'''

@@ -1,0 +1,24 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Donna Carlson, the volunteer monitor for Beaver-1.*
+
+The key takeaways from the 2017 monitoring season are:
+* Chlorophyll concentrations in Beaver-1 have continued to decline since a high peak in 2011, and 2017 had the lowest average chlorophyll concentration of any year on record.
+* Although chlorophyll declined, Beaver-1 continued to have high nutrient concentrations and some of the shallowest Secchi depths of any lake in the Lake Stewardship Program.
+* Beaver-1 is likely to have algal blooms dominated by cyanobacteria, as indicated by the combination of high nutrient concentrations and N:P ratios below 25.
+* An algal bloom in Beaver-1 was reported in July 2017. No algal toxins were detected in the sample. 
+
+The Lake Stewardship Program recommends:
+* Increase awareness and education about toxic algae blooms in Beaver Lake. Algae blooms should be reported to the King County Lake Stewardship Program and, if necessary, samples should be submitted for algal toxin analysis through the NW Toxic Algae Program.
+* Continue monitoring Beaver Lake through the Lake Stewardship Program. 
+'''
+WQ='''
+
+'''
+Trends='''
+'''
+TSI='''
+The phosphorus and Secchi TSI values were in the eutrophic range, though the chlorophyll TSI declined into the mesotrophic range.
+'''

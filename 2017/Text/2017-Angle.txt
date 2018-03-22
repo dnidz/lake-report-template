@@ -1,0 +1,23 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Bruce and Sandy Goulet, the volunteer monitors for Angle Lake.*
+
+The key takeaways from the 2017 monitoring season are: 
+* Angle Lake continued to have good water quality in 2017, with low nutrient concentrations, low algal productivity (low chlorophyll concentrations), and deep Secchi depths. 
+* Angle Lake has been one of the clearest lakes in the Lake Stewardship Program.
+* No algal blooms were reported for toxin testing in 2017. Angle Lake's low nutrient concentrations and N:P ratios above 25 both indicate that Angle Lake is not likely to have cyanobacteria blooms.
+
+The Lake Stewardship Program recommends:
+* Continue monitoring Angle Lake through the Lake Stewardship Program.
+'''
+WQ='''
+Nutrient and chlorophyll concentrations remained low and fairly stable throughout the monitoring season.
+'''
+Trends='''
+Chlorophyll concentrations have decreased over time in Angle Lake, suggesting that water quality has been improving slightly. Although the 0.18 µg/L decrease per decade would be insignificant in many lakes, it is several percent of Angle Lake's average chlorophyll concentration (1.5-2.5 µg/L).
+'''
+TSI='''
+In 2017, all three TSI indicators were in the oligotrophic range. This indicates that Angle Lake continues to be clear, with low nutrient concentrations and good water quality.
+'''

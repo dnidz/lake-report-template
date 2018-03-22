@@ -1,0 +1,25 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Saul Malamud and the King County Environmental Lab staff for monitoring Echo Lake.*
+
+The key takeaways from the 2017 monitoring season are:
+* Echo Lake continued to be eutrophic, with fairly high nutrient and chlorophyll concentrations. 
+* Nitrogen, phosphorus, and chlorophyll concentrations decreased in 2016 and 2017 from high peaks in 2015. However, phosphorus and chlorophyll still show long-term increasing trends. These long-term trends, plus a long-term trend of shallower Secchi depths, suggest that water quality has been declining over time in Echo Lake.
+* Echo Lake is likely to have algal blooms dominated by cyanobacteria (which have the ability to produce toxins), as indicated by the combination of high nutrient concentrations and N:P ratios below 25.
+* Algal blooms were observed throughout July-September at the Echo Lake swimming beach. Toxin testing found low concentrations of microcystin, well below the Washington State Recreational Guidelines. 
+
+The Lake Stewardship Program recommends:
+* Increase awareness and education about toxic algae blooms in Echo Lake. Algae blooms should be reported to the King County Lake Stewardship Program and, if necessary, samples should be submitted for algal toxin analysis through the NW Toxic Algae Program.
+* Continue monitoring Echo Lake through the Lake Stewardship Program. 
+'''
+WQ='''
+
+'''
+Trends='''
+The long-term trends of higher phosphorus and chlorophyll, and shallower Secchi depth, all suggest that water quality has been declining over time in Echo Lake.
+'''
+TSI='''
+The phosphorus and chlorophyll TSI values were in the eutrophic range in 2017, and the Secchi TSI was in the upper mesotrophic range. 
+'''

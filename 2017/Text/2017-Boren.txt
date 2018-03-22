@@ -1,0 +1,24 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to the City of Newcastle staff who monitored Lake Boren.*
+
+The key takeaways from the 2017 monitoring season are:
+* Lake Boren continues to be mesotrophic, with moderate nutrient concentrations and water quality. Chlorophyll concentrations had been higher than average in 2015, but declined through 2016 and 2017.
+* Algal blooms were reported in Lake Boren in October 2017. No algal toxins were detected in these samples.
+* N:P ratios were below 25 for much of the monitoring season, indicating the potential for cyanobacteria (which have the ability to produce toxins) to dominate the algal community.
+
+The Lake Stewardship program recommends:
+* Increase awarenes and education about toxic algal blooms in Lake Boren. Algal blooms should be reported to the King County Lake Stewardship Program and, if necessary, samples should be submitted for algal toxin analysis as part of the NW Toxic Algae Program.
+* Continue monitoring Lake Boren through the Lake Stewardship Program. 
+'''
+WQ='''
+
+'''
+Trends='''
+
+'''
+TSI='''
+In 2017, all three TSI values remained in the mesotrophic range. The total-phosphorus TSI was substantially higher than the other two, suggesting that phosphorus is not the only factor controlling algal growth in Lake Boren. 
+'''

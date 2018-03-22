@@ -1,0 +1,20 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Jay Adams and Milo Dullum, the primary and backup volunteer monitors for Lake Lucerne.*
+
+The key takeaways from the 2017 monitoring season are:
+* Lake Lucerne continues to be oligotrophic-mesotrophic, with clear water, low nutrient concentrations, and low algal growth.
+* Secchi depths have gotten deeper (clearer water) over time.
+* No algal blooms were reported on Lake Lucerne in 2017.
+'''
+WQ='''
+
+'''
+Trends='''
+In recent years, the TSI values have been in the oligotrophic range or near the oligotrphic-mesotrophic boundary.
+'''
+TSI='''
+
+'''

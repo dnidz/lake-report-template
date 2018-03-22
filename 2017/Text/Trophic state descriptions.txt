@@ -1,0 +1,8 @@
+Oligotrophic = low algae productivity, water usually clear, often found in mountain lakes and undisturbed sites.
+
+Mesotrophic = moderate productivity, commonly found in lowland Washington lakes with some development along shorelines and in watershed.
+
+Eutrophic = high productivity, highly altered lakes and those receiving lots of nutrients, low water clarity, may contain nuisance or toxic bluegreen algae
+
+
+*Oligotrophic* lakes are very clear, with low nutrient concentrations and low algal growth. These are often mountain lakes, or lakes in undisturbed forests. *Mesotrophic* lakes are in the middle, with fairly clear water, and moderate nutrient concentrations and algal growth. Mesotrophic lakes are common in lowland western Washington, especially in areas with some development along the shoreline and in the watershed. *Eutrophic* lakes have cloudy water, with high nutrient concentrations and high algal growth. These are often highly altered lakes, and may have frequent algal blooms.

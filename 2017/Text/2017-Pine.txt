@@ -1,0 +1,25 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Kate Bradley, the volunteer monitor for Pine Lake.*
+
+The key takeaways from the 2017 monitoring season are:
+* Pine Lake continues to be oligotrophic-mesotrophic, with fairly low nutrient concentrations and algal growth. 
+* Long-term trends suggest improving water quality, with lower nitrogen and chlorophyll concentrations, and slightly deeper Secchi depths.
+* An algal bloom was reported in May-June 2017. Toxin testing found low concentrations of anatoxin-a, well below the Washington State Recreational Guidelines. 
+* N:P ratios were generally above 25, indicating a low likeihood of cyanobacteria (which have the ability to produce toxins) dominating the algal community. The exception was in mid-late May, corresponding to the time when the cyanobacteria bloom was reported.
+
+The Lake Stewardship Program recommends:
+* Increase awareness and education about toxic algae blooms in Pine Lake. Algae blooms should be reported to the King County Lake Stewardship Program and, if necessary, samples should be submitted for algal toxin analysis through the NW Toxic Algae Program.
+* Continue monitoring Pine Lake through the Lake Stewardship Program. 
+'''
+WQ='''
+For temperature averages, note that the trend line (black dashed line) was estimated using year-round data, while the blue points are May-October averages and are higher than the year-round trend.
+'''
+Trends='''
+The long-term trends of lower nitrogen and chlorophyll concentrations, and slightly deeper Secchi depths, suggest that water quality has been improving over time in Pine Lake. 
+'''
+TSI='''
+All three TSI values were near the oligotrophic-mesotrophic boundary in 2017.
+'''

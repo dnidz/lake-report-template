@@ -1,0 +1,24 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Shawna Blyth, Robb Wolfe, Bassem Bejjani and Mariana Varotto, the primary and backup volunteer monitors for Beaver-2.*
+
+The key takeaways for the 2017 monitoring season are:
+* Beaver-2 continued to be mesotrophic in 2017, with moderate nutrient concentrations and algal growth. Overall water quality was similar to 2016.
+* N:P ratios fluctuated around 25, indicating some potential for the algal community to be dominated by cyanobacteria (which have the ability to produce toxins).
+* No algal blooms were reported for toxin testing in 2017.
+
+The Lake Stewardship Program recommends:
+* Increase awareness and education about toxic algae blooms in Beaver Lake. Algae blooms should be reported to the King County Lake Stewardship Program and, if necessary, samples should be submitted for algal toxin analysis through the NW Toxic Algae Program.
+* Continue monitoring Beaver Lake through the Lake Stewardship Program. 
+'''
+WQ='''
+Nutrient and chlorophyll concentrations, as well as Secchi depth, were fairly stable throughout May-October 2017, without strong seasonal patterns.
+'''
+Trends='''
+
+'''
+TSI='''
+In 2017, all three TSI values continued to be in the mesotrophic range.
+'''

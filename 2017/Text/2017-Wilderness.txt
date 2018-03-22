@@ -1,0 +1,25 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Paul Wichelmann and Charley Benedict, the primary and backup volunteer monitors for Lake Wilderness.*
+
+The key takeaways from the 2017 Monitoring Season are:
+* Lake Wilderness continues to be mesotrophic, with moderate nutrient concentrations and algal productivity. While chlorophyll concentrations had been higher than average in 2015 and 2016, they returned to more typical values in 2017.
+* One algal bloom was reported in Lake Wilderness in 2017. The analysis revealed a detectable level of algal toxin, but levels were below Washington State Recreational Guidelines. This is an improvement from 2015 and 2016, which both had persistent blooms exceeding the recreational guidelines. Blooms tend to occur in late summer.
+
+The Lake Stewardship program recommends:
+* Increase awarenes and education about toxic algal blooms in Lake Wilderness. Algal blooms should be reported to the King County Lake Stewardship Program and, if necessary, samples should be submitted for algal toxin analysis as part of the NW Toxic Algae Program.
+* Continue monitoring Lake Wilderness through the Lake Stewardship Program. 
+'''
+WQ='''
+Lake Wilderness had seasonal patterns in nutrient dynamics in 2017, with higher nutrient concentrations in spring and fall than in summer. Nitrogen was highest in spring, and phosphorus was highest in fall. As a result, N:P ratios declined throughout the sampling season, and were below 25 in October. 
+
+As is common in many small lakes, chlorophyll concentrations were highest in October, when lake turnover and early rains increased surface-water nutrient concentrations. October's combination of high chlorophyll and low N:P ratios indicated the potential for toxic cyanobacteria blooms. An algal bloom sample was tested for toxins in late October, and had moderate concentrations of microcystin (4.5 µg/L, below the 6 µg/L state recreational guidance threshold).
+'''
+Trends='''
+Overall, Lake Wilderness water quality has been fairly stable over time. The increasing total nitrogen and decreasing total phosphorus concentrations have both contributed to an increasing N:P ratio. If this trend continues, we expect that algal blooms in Lake Wilderness will be less frequently dominated by potentially-toxic cyanobacteria.
+'''
+TSI='''
+In 2017, all three TSI values were in the mesotrophic or mesotrophic-oligotrophic range. 
+'''

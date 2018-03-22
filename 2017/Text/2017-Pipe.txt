@@ -1,0 +1,22 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Tom Sullivan, the volunteer monitor for Pipe Lake*
+
+The key takeaways from the 2017 monitoring season are:
+* Pipe Lake continues to be oligotrophic, with clear water, low nutrient concentrations, and low algal growth.
+* Pipe Lake has one of the deepest Secchi depths (clearest water) of any lake in the Lake Stewardship program. Secchi depths have been getting even deeper over time.
+* No algal blooms were reported in 2017.
+
+The Lake Stewardship Program recommends continued monitoring of Pipe Lake.
+'''
+WQ='''
+
+'''
+Trends='''
+The trend of deeper Secchi depths (clearer water) in Pipe Lake is especially noticeable. On average, Secchi depths in recent years have been about 1.5 m deeper than they were in the mid-1990s when monitoring began. 
+'''
+TSI='''
+In recent years, the three TSI values have been in the oligotrphic range, or near the oligotrophic-mesotrophic boundary.
+'''

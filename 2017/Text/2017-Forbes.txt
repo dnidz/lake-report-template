@@ -1,0 +1,22 @@
+Description='''
+
+'''
+Overview='''
+*Thank you to Bud & Corinne Gessell, Caroll Pohl-Ferry, and Elena Ferry, the primary and backup volunteer monitors for Forbes Lake.*
+
+The key takeaways from the 2017 monitoring season are:
+* Forbes Lake continued to be mesotrophic, with moderate nutrient concentrations and algal growth. Overall water quality was very similar to 2016.
+* N:P ratios were below 25 for most of the monitoring season, indicating the potential for the algal community to be dominated by cyanobacteria (which have the ability to produce toxins).
+* No algal blooms have been reported in Forbes Lake to date.
+
+The Lake Stewardship Program recommends continued monitoring in Forbes Lake. 
+'''
+WQ='''
+
+'''
+Trends='''
+The long-term trends of lower nitrogen and phosphorus, and deeper Secchi depth, all suggest that water quality has been improving over time in Forbes Lake. Forbes Lake has also been getting warmer over time.
+'''
+TSI='''
+The total-phosphorus TSI value was at the low end of the eutrophic range, while the other two TSI values were in the mesotrophic range.
+'''
