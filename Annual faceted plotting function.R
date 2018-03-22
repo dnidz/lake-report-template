@@ -236,6 +236,19 @@ lake.plot.web<-function(data.L1,data.L2,is.L1,lake,year,y) {
   m.secchi<-bind_rows(data.L1,data.L2) %>%
     lake.plot.facet(lake,year,y,wy=wy.st,means=T,params.list="ST",rev=T)
   
+  # TP and N:P ratio cut off at 1998, and they're now in their own faceted graph so nothing forces the full x-axis.
+  # Check and fix x-axis
+  startyear<-data.L2 %>%
+    mutate(Year=year(Date)) %>%
+    filter(Lake==lake,
+           Year>=1994,
+           Parameter=="TotalNitrogen") %>%
+    .$Year %>%
+    min(na.rm=T)
+  
+  m.L2.2<-m.L2.2 + 
+    scale_x_continuous(limits=c(startyear,year),breaks=seq(startyear,year,2))
+  
   # For tweaking, set width and height once
   w<-6
   h<-12
