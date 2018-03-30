@@ -1,11 +1,11 @@
 ---
 always_allow_html: yes
 output:
-  word_document: default
+  html_document: default
 params:
   lake: Angle
   year: 2017
-  format: word
+  format: HTML
 ---
 
 

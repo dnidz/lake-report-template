@@ -316,7 +316,7 @@ lake.plot.web<-function(data.L1,data.L2,is.L1,lake,year,y) {
   # The x-axis is the same for secchi/temp and L2 for the means, but need to repeat it to make the plots line up side-by-side
   
   GpimageTile(sprintf("%s/Plots/%s-%s-WQ-web.png",year,year,lake),
-              matrix(c("Tmp/tmp-combined.png","WQ title.png"),ncol=2),
+              matrix(c("Tmp/tmp-combined.png","Scripts/WQ title.png"),ncol=2),
               wpix*2,
               c(hpix.L2+hpix.st,100)
   )
@@ -395,7 +395,7 @@ lake.plot.print.L1<-function(data.L1,data.L2,lake,year,y) {
   # The x-axis is the same for secchi/temp and L2 for the means, but need to repeat it to make the plots line up side-by-side
   
   GpimageTile(sprintf("%s/Plots/%s-%s-WQ-print.png",year,year,lake),
-              matrix(c("Tmp/tmp-combined.png","WQ title.png"),ncol=2),
+              matrix(c("Tmp/tmp-combined.png","Scripts/WQ title.png"),ncol=2),
               wpix*2,
               c(hpix.L2+hpix.st,100)
   )
@@ -449,7 +449,7 @@ lake.plot.print.L2<-function(data.L1,data.L2,lake,year,y) {
   )
   
   GpimageTile(sprintf("%s/Plots/%s-%s-WQ-print.png",year,year,lake),
-              matrix(c("Tmp/tmp-combined.png","WQ title.png"),ncol=2),
+              matrix(c("Tmp/tmp-combined.png","Scripts/WQ title.png"),ncol=2),
               wpix*2,
               c(hpix,100)
   )

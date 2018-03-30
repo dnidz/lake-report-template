@@ -1,0 +1,166 @@
+---
+always_allow_html: yes
+output:
+  html_document: default
+params:
+  lake: Angle
+  year: 2017
+  format: HTML
+  appendix: TRUE
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+options(knitr.kable.NA = '')
+options(scipen=999)
+Sys.setenv("PATH"=sprintf("%s;C:\\Users\\danidzgorski\\AppData\\Local\\Programs\\MiKTeX 2.9\\miktex\\bin\\x64\\",Sys.getenv("PATH")))
+
+if(params$format=="HTML") {
+  options(knitr.table.format="html")
+} else {
+  options(knitr.table.format="latex")
+}
+
+# Set up data and read in other functions
+eval(parse("Scripts/Lake report data setup.R", encoding="UTF-8"))
+# Sets up:
+# L2 data, weekly.data, daily.data
+# is.weekly, is.daily
+# y (labels, maxima, etc)
+# t (individual lake's interpretive text)
+
+# Make required output directories
+dir.create(sprintf("%s/Plots",params$year),showWarnings=F)
+dir.create(sprintf("%s/Tables",params$year),showWarnings=F)
+dir.create("Tmp",showWarnings=F)
+```
+
+# `r LakeName`: `r params$year` Lake Stewardship Data
+
+`r if(!is.null(t$Description)) t$Description`
+
+`r if(!is.null(t$Overview)) t$Overview`
+
+## Water quality plots and annual averages
+The plots below present results from water quality sampling in `r params$year`, as well as annual averages. 
+
+* **Secchi depth** is a measure of water clarity or transparency. Secchi depth is shallower when there are more suspended particles in the lake, such as sediment or algae. Secchi depth is also affected by water color, often from tannins or other naturally occurring organic molecules.
+* **Water temperature** can affect the growth rates of plants and algae. In addition, cooler or warmer water temperatures favor different species of fish and other aquatic organisms. 
+* **Chlorophyll-a** is a measure of the amount of algae in a lake. Chlorophyll-a is a pigment necessary for algae to photosynthesize and store energy.
+* **Phosphorus** and **nitrogen** are naturally occurring nutrients necessary for growth and reproduction in both plants and animals. Increases in nutrients (especially phosphorus) can lead to more frequent and dense algal blooms.
+* The **ratio of total nitrogen to total phosphorus (N:P)** indicates whether nutrient conditions favor the growth of cyanobacteria (blue-green algae). When N:P ratios are near or below 25, cyanobacteria can dominate the algal community. This is important because cyanobacteria can potentially produce toxins.
+
+Data for `r LakeName` are the blue points connected by the blue line. Any gaps in the blue line indicate missed samples. To provide some context for these values, the grey points in the background are results for all other lakes in the Lake Stewardship program.
+
+`r if(is.weekly) paste("Secchi depth and water temperature are currently measured year-round. Individual samples for Secchi and temperature are presented for the water year (October 1st through September 30th). Annual averages for all parameters, including Secchi and temperature, are for May-October data only. This makes it possible to compare averages across all years (some years did not have year-round Secchi and temperature measurements) and with other lakes. ")`
+`r if(!is.weekly) paste("Annual averages are for May-October data. ")`
+Any statistically discernable trends are drawn with a dashed black line, and described further in the next section.
+
+```{r Water quality plots, message=FALSE, warning=FALSE}
+# Detect if L1 lake, and plot accordingly
+# Note that means always include L1 and L2 data for consistency -- 
+# some lakes aren't L1 this year but were in the past.
+# Even though the means are May-October, the trends use both.
+# Generate print plots as well, for future use.
+
+if(params$format=="HTML") {
+  if(is.weekly) { 
+    lake.plot.web(data.L1=weekly.data,data.L2=L2.data,is.L1=T,lake=params$lake,year=params$year,y=y)
+  } else {
+    lake.plot.web(data.L1=weekly.data,data.L2=L2.data,is.L1=F,lake=params$lake,year=params$year,y=y)
+  }
+  
+  include_graphics(sprintf("%s/Plots/%s-%s-WQ-web.png",params$year,params$year,params$lake))
+  
+} else {
+  if(is.weekly) { 
+    lake.plot.print.L1(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
+  } else {
+    lake.plot.print.L2(data.L1=weekly.data,data.L2=L2.data,lake=params$lake,year=params$year,y=y)
+  }
+  
+  include_graphics(sprintf("%s/Plots/%s-%s-WQ-print.png",params$year,params$year,params$lake))
+}
+```
+
+`r if(!is.null(t$WQ)) t$WQ`
+
+## Trends over time
+```{r Trend analysis, message=FALSE, warning=FALSE}
+trends<-lake.trend.seasonal(data=bind_rows(weekly.data,L2.data),
+                            lake=params$lake,
+                            year=params$year,
+                            params.list="L2",
+                            overall.only=T)
+
+trends.sig<-trends %>% 
+  filter(p<0.05,
+         slope!=0)
+
+has.trends<-nrow(trends.sig)>0
+
+table.trends<-trends.sig %>%
+  left_join(y,by="Parameter") %>%
+  arrange(label) %>%
+  mutate(DecadalChange=signif(slope*10,2),
+         p=scientific(p,2),
+         ChangeText=sprintf("%s %s",DecadalChange,units)
+  ) %>%
+  select(text,ChangeText) %>%
+  kable(booktabs=T,
+        col.names=c("Parameter","Change per Decade"),
+        align="lr"
+  ) %>%
+  kable_styling(full_width=F)
+
+if(params$format=="word") trendtable<-kable_as_image(table.trends,filename=sprintf("%s/Tables/%s-%s-trends",params$year,params$year,params$lake),
+                           file_format="jpeg")
+
+```
+To understand how `r LakeName` has been changing over time, we tested water-quality parameters for trends using a seasonal Kendall test. 
+`r if(!has.trends) paste(LakeName,"does not have any statistically discernable trends (p<0.05) over time.")`
+`r if(has.trends) paste("Below are the statistically discernable trends (p<0.05). Results are presented as an average amount of change per decade.")`
+
+`r if(has.trends & params$format!="word") table.trends`
+`r if(has.trends & params$format=="word") trendtable`
+
+
+`r if(!is.null(t$Trends)) t$Trends`
+
+## Trophic State Indices
+The Trophic State Index (TSI) is a common index of a lake's overall biological productivity. TSI values are calculated from Secchi depth, chlorophyll-a concentrations, and total phosphorus concentrations. These three TSI estimates are all scaled between 0 and 100.
+
+*Oligotrophic* lakes (TSI <40) are very clear, with low nutrient concentrations and low algal growth. These are often mountain lakes, or lakes in undisturbed forests. *Eutrophic* lakes (TSI >50) have cloudy water, with high nutrient concentrations and high algal growth. These are often highly altered lakes, and may have frequent algal blooms. *Mesotrophic* lakes (TSI 40-50) are in the middle, with fairly clear water, and moderate nutrient concentrations and algal growth. Mesotrophic lakes are common in lowland western Washington, especially in areas with some development along the shoreline and in the watershed. 
+
+```{r TSI plot, fig.height=3.5, fig.width=6, message=FALSE, warning=FALSE}
+TSI<-TSI.plot(data=L2.data,lake=params$lake,year=params$year)
+
+  ggsave(TSI,
+         file=sprintf("%s/Plots/%s-%s-TSI.png",params$year,params$year,params$lake),
+         width=6,height=3.5)
+
+TSI
+```
+
+`r if(!is.null(t$TSI)) t$TSI`
+
+## Lake trophic state comparison
+For a comparison with other lakes, this map shows the trophic state for each lake in the King County Lake Stewardship program in `r params$year`. The color of each circle indicates the lake's average chlorophyll-a TSI value for the year.
+```{r TSI map, fig.height=5, fig.width=5, message=FALSE, warning=FALSE}
+if(params$format=="HTML") {
+  TSI.map(data=L2.data,lake=params$lake,year=params$year)
+} else {
+  # There's some randomness in the ggrepel of the map labels,
+  # so make the TSI map separately and check the positioning.
+  include_graphics(sprintf("%s/Plots/%s-TSI map.png",params$year,params$year))
+}
+```
+
+
+```{r test-main, eval=params$appendix, child='Lake-report-appendix.Rmd', include=params$appendix}
+```
